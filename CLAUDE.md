@@ -50,10 +50,16 @@ failure go away without first checking whether the app changed.
 The app has **zero** `data-testid` attributes and cannot be modified. Form inputs have no
 `id`, no `name`, and no `<label>` — only `placeholder` and Bootstrap classes. So:
 
-- `getByLabel(...)` matches nothing anywhere in this app.
-- `getByRole('textbox')` cannot find a password field — `input[type=password]` has no
-  implicit ARIA role. The email field does map to `textbox`, so this fails asymmetrically.
+- `getByLabel(...)` matches nothing anywhere in this app. Verified: 0 hits for both
+  `getByLabel('Email')` and `getByLabel('Password')`.
+- `getByRole('textbox')` unqualified is ambiguous — 2 matches on the login form. Qualified
+  with a name it works, including for the password field, because Chromium exposes
+  password inputs as textboxes and derives the accessible name from the placeholder.
 - `.locator('.form-control')` is ambiguous — two matches on login, four in the editor.
+
+Page objects use `getByPlaceholder` for inputs. It is explicit about what the selector is
+actually coupled to, and it does not lean on a role mapping the HTML-AAM spec says should
+not exist.
 
 Derive selectors from the running DOM or the component source, never from memory of what
 a login form usually looks like.

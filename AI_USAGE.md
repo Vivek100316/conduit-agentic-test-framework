@@ -64,11 +64,12 @@ grep -rn "data-testid" react-redux-realworld-example-app/src/ | wc -l
 
 Zero test ids, and modifying the app under test is out of scope. Reading
 `src/components/Login.js` showed the second problem: the form's inputs have no `id`, no
-`name`, and no `<label>` — only `placeholder` and Bootstrap classes. Since
-`input[type=password]` has **no implicit ARIA role**, `getByRole('textbox')` cannot match
-the password field at all, while the `type=email` field *does* map to `textbox`. A rule
-forcing those two locator strategies would have made the login page untestable, and
-half-working in a way that reads as a framework bug.
+`name`, and no `<label>` — only `placeholder` and Bootstrap classes, so `getByLabel`
+matches nothing and `getByTestId` has nothing to find. A rule forcing those two locator
+strategies would have made the login page untestable.
+
+(The reasoning about `getByRole` in the first version of this section was itself wrong —
+see §7.)
 
 **Correction:** the rule is not "only these locator types." It is
 `no-locators-outside-page-objects` — locators of any kind are a lint error outside
@@ -171,6 +172,57 @@ for three to five tests covering critical flows, puts full coverage out of scope
 depth over breadth. Producing more tests because the framework made them cheap to write is
 exactly the failure mode a capable code generator encourages. Trimmed to four, with the
 reasoning recorded as D-006.
+
+---
+
+### 7. Claude reasoned from a specification to a library's behaviour, and was wrong (PR3)
+
+The most instructive error in this repository, because the framework exists to prevent
+exactly this class of mistake and its author committed it anyway.
+
+While writing the guardrail rule in PR1, Claude asserted — confidently, and with correct
+supporting reasoning — that:
+
+> `getByRole('textbox')` cannot find a password field: `input[type=password]` has **no
+> implicit ARIA role**, so it never matches, while the `type=email` field *does* map to
+> `textbox`. This fails asymmetrically.
+
+The premise is true. [HTML-AAM][htmlaam] does specify **no corresponding role** for
+`input[type=password]`. The conclusion about Playwright is false. That claim was written
+into `CLAUDE.md`, `README.md`, `AI_USAGE.md`, and the rule's own doc comment, and shipped
+in PR1.
+
+**Caught by:** running every candidate locator against the live page before writing the
+first page object.
+
+```
+OK   count=1  getByRole('textbox', {name:'Email'})
+OK   count=1  getByRole('textbox', {name:'Password'})     ← claim said 0
+BAD  count=2  getByRole('textbox')  [all]
+BAD  count=0  getByLabel('Password')
+BAD  count=0  getByLabel('Email')
+OK   count=1  getByPlaceholder('Password')
+BAD  count=2  locator('.form-control')
+OK   count=1  getByRole('button', {name:'Sign in'})
+```
+
+Chromium's accessibility tree exposes password inputs as textboxes and derives the
+accessible name from the `placeholder`, and Playwright's role engine follows Chromium
+rather than HTML-AAM. Half the original claim held up — `getByLabel` really does match
+nothing — and the half that did not was the more specific, more confident half.
+
+**Corrected everywhere it appeared.** Page objects use `getByPlaceholder` for inputs: not
+because `getByRole` fails, but because it is explicit about what the selector is really
+coupled to and does not depend on a role mapping the spec says should not exist.
+
+**Why it belongs at the top of this file.** The whole framework rests on one rule — *do
+not reason from a specification to what the running system does; go and observe it*. That
+rule was written for the RealWorld swagger file. It applies just as well to the ARIA spec,
+to Playwright's documentation, and to a model's confident recollection of either. A
+guardrail catches an agent's bad selector; nothing but running the thing catches a
+plausible, well-argued, false premise in the prose that justifies the guardrail.
+
+[htmlaam]: https://www.w3.org/TR/html-aam-1.0/
 
 ---
 

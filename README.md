@@ -44,7 +44,7 @@ structurally, rather than asking a contributor to remember something.
 | What an agent does | What stops it |
 | --- | --- |
 | `getByLabel('Password')` — no labels exist in this app | Locators are a lint error outside `src/pages/` |
-| `getByRole('textbox')` for a password field — `input[type=password]` has no implicit ARIA role | Same rule; the page object holds a selector verified against the real DOM |
+| `getByRole('textbox')` unqualified — 2 matches on the login form | Same rule; the page object holds a selector verified against the real DOM |
 | `.locator('.form-control')` — 2 matches on login, 4 in the editor | Same rule |
 | `expect(status).toBe(422)` on duplicate registration, because the spec says so | Raw HTTP is a lint error outside `src/api/`; the client's schemas encode observed behaviour |
 | `expect(created.tagList).toEqual(sentTags)` — the create response never echoes tags | Client method documents it; `ART-P1-01` pins the real behaviour |
@@ -81,8 +81,20 @@ line responsible. Notably, error responses are not JSON (`403` is `text/plain`, 
 
 ## Scope of coverage
 
-Four API tests, covering registration and authentication, duplicate-email rejection,
-article publication and read-back, and the authorization boundary on editing.
+Six tests: four API, two UI.
+
+| Test | Covers |
+| --- | --- |
+| `AUTH-P0-01` | Registration, token authenticates, credentials log in |
+| `AUTH-P1-01` | Duplicate email rejected — a documented `404` deviation |
+| `ART-P0-01` | Article published and read back — the `tagList` deviation |
+| `AUTHZ-P0-01` | Non-author cannot edit, and the article is genuinely unchanged |
+| `UI-P0-01` | Signing in through the form, and the session surviving a reload |
+| `UI-P0-02` | Publishing from the editor and the article rendering |
+
+Signing in through the form is proved once, by `UI-P0-01`. Every other UI test injects the
+session directly, because re-proving login on the way to testing something else only buys
+extra ways to fail.
 
 `ConduitClient` deliberately covers much more than the tests exercise — favourites,
 comments, follows, tags, delete. That gap is a decision, not unfinished work: the brief

@@ -109,6 +109,33 @@ start both processes, wait on `app:health`, then run `verify`.
 
 ---
 
+## D-007 — Sessions are injected per test, not replayed from `storageState`
+
+**Chosen.** `authenticatedPage` registers a fresh user over the API and writes its JWT
+straight into `localStorage.jwt` with `addInitScript` — the same key the app writes
+(`src/middleware.js:52`) and reads on boot (`src/components/App.js:43`).
+
+**Rejected: Playwright's `storageState`.** It is the standard answer and it is the wrong
+one here. `storageState` saves one authenticated session to a file and replays it, which
+means every test that uses it shares a user. This framework's isolation comes from every
+test owning unique data (D-003), and a shared session quietly reintroduces the coupling
+that decision exists to prevent — one test favouriting an article, following an author, or
+editing a profile would be visible to every other.
+
+Injecting per test costs one API registration — measured in tens of milliseconds against a
+local SQLite app — and keeps the isolation model intact.
+
+**Rejected: signing in through the form in every UI test.** Slow, and it couples every
+test's reliability to a screen it is not trying to test. Signing in is proved once, by
+`UI-P0-01`, which also covers the part injection would skip: that the session survives a
+reload, since it lives in `localStorage` rather than a cookie.
+
+**Would flip if:** login became expensive — a real identity provider, MFA, or a rate
+limiter — at which point a `storageState` per worker, with users still unique per worker,
+becomes the right trade.
+
+---
+
 ## D-006 — Four API tests, deliberately, against a client that covers far more
 
 **Chosen.** The suite covers four critical flows: registration and authentication,
