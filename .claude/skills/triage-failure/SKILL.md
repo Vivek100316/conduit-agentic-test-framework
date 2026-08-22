@@ -1,0 +1,85 @@
+---
+name: triage-failure
+description: Diagnose a failing test in this framework before changing anything. Use when a test goes red, a suite fails, or someone reports flakiness.
+---
+
+# Triage a failing test
+
+**A red test is a claim about the app, not a defect in the test.** Treat it as true until
+you have evidence otherwise. The most expensive mistake available here is to "fix" a test
+that was correctly reporting a problem — loosening an assertion, adding a wait, or
+widening a schema turns a signal into silence, and nobody notices until production does.
+
+Work through these in order. Stop at the first that explains the failure.
+
+## 1. Is the app running?
+
+```bash
+npm run app:health
+```
+
+Connection-refused errors, every test in a file failing at once, or a browser timing out on
+`goto` all point here. The app is a separate process on Node 16; see
+[APP_SETUP.md](../../../docs/APP_SETUP.md).
+
+**If this is the cause, change nothing in the repository.**
+
+## 2. Is it a documented deviation?
+
+Read [API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md).
+
+A test expecting `422` and receiving `404`, or expecting `201` and receiving `200`, is
+almost certainly a test written from the RealWorld spec rather than from this app. The fix
+is to assert what the app does — not to widen the assertion until it passes.
+
+## 3. Did the app's contract actually change?
+
+If a schema rejected a response, read the message: it names the route and the field. Then
+issue the request yourself and compare.
+
+- **Response changed, test right** → update the schema, add a row to `API_DEVIATIONS.md`,
+  and say so in the pull request. This is a finding.
+- **Schema was wrong all along** → correct it, and note what made it wrong.
+
+Never delete a field from a schema to make an error go away. That is how validation quietly
+stops validating.
+
+## 4. Did a selector drift?
+
+Symptoms: strict-mode violations ("resolved to 2 elements"), or a locator timing out while
+the page clearly renders.
+
+Open the running app and check the real DOM — or delegate to the **selector-scout**
+subagent. Fix the page object; never move a locator into the test to work around it.
+
+## 5. Is it genuinely order-dependent?
+
+Run the single test in isolation:
+
+```bash
+npx playwright test <file> --workers=1
+```
+
+Passes alone, fails in the suite? Look for an absolute-count assertion against shared
+global state — the tag sidebar and the Global Feed belong to every test at once. The fix is
+a relative assertion, not a retry.
+
+Retries are set to zero deliberately. A retry turns a flaky test green and removes the
+pressure to find out why.
+
+## 6. Only now consider that the test is wrong
+
+If none of the above explains it, the test may be mis-specified. Re-read the scenario in
+`docs/scenarios/` it claims. If the test and the scenario disagree, one of them is wrong —
+decide which, and change that one.
+
+## Reporting
+
+Say which step explained the failure. "The app was not running" and "the app's contract
+changed" are entirely different outcomes, and only one of them is a bug in this repository.
+
+Traces are retained on failure (`playwright.config.ts`). Open with:
+
+```bash
+npx playwright show-trace test-results/<path>/trace.zip
+```

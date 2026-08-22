@@ -15,7 +15,10 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "app:health": "tsx tools/health-check.ts",
-    "verify": "npm run typecheck && npm run lint && npm test"
+    "new:test": "tsx tools/scaffold.ts test",
+    "new:page": "tsx tools/scaffold.ts page",
+    "scenarios:coverage": "tsx tools/scenario-coverage.ts",
+    "verify": "npm run typecheck && npm run lint && npm run scenarios:coverage && npm test"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

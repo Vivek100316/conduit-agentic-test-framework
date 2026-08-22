@@ -226,6 +226,38 @@ plausible, well-argued, false premise in the prose that justifies the guardrail.
 
 ---
 
+### 8. Two things that only worked because they were run (PR4)
+
+Neither of these is a dramatic failure; both are cases where a plausible artifact would
+have shipped broken had it not been executed once.
+
+**The hook's formatter did not exist.** `.claude/hooks/lint-changed.mjs` was written with
+`eslint --format compact`, which is correct for ESLint 8 and removed from core in ESLint 9.
+The hook still exited 2, so it *looked* like it was working — it was reporting a formatter
+error as if it were a lint violation:
+
+```
+Guardrails rejected tests/api/hook-probe.spec.ts:
+The compact formatter is no longer part of core ESLint.
+```
+
+A hook that always fires looks identical to a hook that works, right up until it lets a
+real violation through. Caught by piping a deliberately bad file's path into the hook and
+reading what came back, rather than assuming exit code 2 meant success.
+
+**The scaffolder generated tests that failed the build.** The template put `[TODO-P0-01]`
+in the test title as a placeholder. That string matches the scenario ID pattern, so
+`scenarios:coverage` correctly flagged every freshly generated file as claiming an ID no
+design defines — making the generator's whole purpose, *produce something that is green
+before you edit it*, false on first use. Changed to `REPLACE-WITH-SCENARIO-ID`, which
+cannot parse as an ID. Verified by generating a file and running it: green in 676ms,
+untouched.
+
+The pattern in both: the artifact was well-formed, the reasoning behind it was sound, and
+one execution disproved it. Same lesson as §7, arrived at twice more.
+
+---
+
 ## Where AI was used successfully
 
 **Environment archaeology.** Getting the app running took four discoveries — an empty git

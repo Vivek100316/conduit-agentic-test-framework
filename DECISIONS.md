@@ -109,6 +109,33 @@ start both processes, wait on `app:health`, then run `verify`.
 
 ---
 
+## D-008 — Coverage is computed, and the gap is the deliverable
+
+**Chosen.** Scenario designs in `docs/scenarios/` carry stable IDs; a test claims one by
+putting the ID in its title; `npm run scenarios:coverage` joins the two and prints
+implemented against designed, currently **6 of 30**. It fails the build on an *orphan* — a
+test claiming an ID no design defines — and never on an unimplemented scenario.
+
+That asymmetry is the whole point. Failing on unimplemented scenarios would push
+contributors to delete inconvenient rows, which converts a record of judgement into a
+record of what was easy. Failing on orphans keeps every claimed ID reviewable.
+
+**Rejected: line or branch coverage.** It measures which code the tests happened to
+execute, which for a black-box suite against someone else's app is both unobtainable and
+beside the point. The question worth answering is not "what did we touch" but "what did we
+decide was worth testing, and what did we consciously leave".
+
+**Rejected: leaving the gap implicit.** Six tests with no scenario design reads as thin.
+Six tests against thirty designed scenarios, each unimplemented one carrying a reason,
+reads as scope control. Same suite, opposite impression — and only one of them is
+inspectable.
+
+**Would flip if:** the designs stopped being maintained, at which point the number becomes
+a comforting fiction. The failure mode to watch for is scenario files that stop changing
+while the suite keeps growing.
+
+---
+
 ## D-007 — Sessions are injected per test, not replayed from `storageState`
 
 **Chosen.** `authenticatedPage` registers a fresh user over the API and writes its JWT

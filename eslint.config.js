@@ -85,5 +85,18 @@ module.exports = tseslint.config(
         __dirname: 'readonly',
       },
     },
+  },
+
+  {
+    // Claude Code hooks are plain ESM run by node, outside the TypeScript project.
+    files: ['.claude/hooks/**/*.mjs'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+      },
+    },
   }
 );

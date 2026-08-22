@@ -27,12 +27,15 @@ prints the exact command to start whichever one is not.
 
 | Command | What it does |
 | --- | --- |
-| `npm run verify` | Typecheck, lint, and run the API suite. **The definition of done — run before every push.** |
+| `npm run verify` | Typecheck, lint, scenario coverage, both suites. **The definition of done — run before every push.** |
 | `npm run test:api` | API suite only. Sub-second; this is the inner loop. |
 | `npm run test:ui` | UI suite only. |
 | `npm test` | Everything. |
 | `npm run lint` | Guardrails and style. |
 | `npm run app:health` | Is the app under test running? |
+| `npm run scenarios:coverage` | Designed scenarios vs. implemented ones. |
+| `npm run new:test -- <api\|ui> <name>` | Scaffold a spec that is green before you edit it. |
+| `npm run new:page -- <Name>` | Scaffold a page object. |
 
 ## What "agentic-first" means here
 
@@ -65,10 +68,45 @@ src/fixtures/    Playwright fixtures composed with test.extend
 src/config/      Environment loading and validation
 tests/api/       API specs
 tests/ui/        UI specs
-tools/           Health check and repository checks
+tools/           Health check, scaffolding, scenario coverage
 eslint-rules/    Custom guardrail rules
-docs/            Standards, app setup
+.claude/         Skills, subagents, and the lint-on-edit hook
+docs/            Standards, data strategy, deviations, scenario designs
 ```
+
+## The agentic infrastructure
+
+Eight artifacts, each closing a failure mode named above rather than added for
+completeness.
+
+| Artifact | Closes |
+| --- | --- |
+| `eslint-rules/` (2 custom rules) | Hallucinated selectors and one-off HTTP calls |
+| `.claude/hooks/lint-changed.mjs` | Delay between writing a violation and hearing about it |
+| `.claude/skills/add-api-test` | Asserting the spec instead of the app |
+| `.claude/skills/add-ui-test` | Guessing selectors on an app with no test ids |
+| `.claude/skills/design-scenarios` | Coverage chosen by convenience rather than priority |
+| `.claude/skills/triage-failure` | "Fixing" a test that was correctly reporting a bug |
+| `.claude/agents/selector-scout` | Selectors derived from memory rather than the DOM |
+| `npm run new:test` / `new:page` | Conventions that must be read to be followed |
+
+The hook is the piece worth trying: edit a spec, put a locator in it, and the violation
+comes back before you have moved on. Guardrails only ever say *no* — the generators are the
+half that says *yes, here*, and a generated file passes `verify` before a line is changed.
+
+Coverage is a computed number, not a claim:
+
+```
+$ npm run scenarios:coverage
+  Priority   Implemented / Designed
+  P0                   5 / 11
+  P1                   1 / 15
+  P2                   0 / 4
+  TOTAL                6 / 30
+```
+
+Unimplemented scenarios never fail the build; an orphaned ID — one a test claims but no
+design defines — always does. See [D-008](DECISIONS.md).
 
 Conventions live in [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md);
 architecture decisions and their rejected alternatives in [DECISIONS.md](DECISIONS.md);
