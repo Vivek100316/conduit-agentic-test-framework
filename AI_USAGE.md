@@ -161,8 +161,16 @@ been to loosen the assertion or add a wait — treating a deterministic app beha
 flake. Probing first meant the deviation was documented (`ART-P1-01`,
 `docs/API_DEVIATIONS.md`) instead of papered over.
 
-All seventeen tests in PR2 passed on their first run, which is the intended consequence of
+Every test written this way passed on its first run, which is the intended consequence of
 observing before asserting rather than a sign that the tests are weak.
+
+A related correction, on the same branch and worth recording because it is a judgement
+error rather than a factual one: the first revision of this suite had **seventeen** tests.
+They passed and they were fast, and they were still the wrong deliverable — the brief asks
+for three to five tests covering critical flows, puts full coverage out of scope, and says
+depth over breadth. Producing more tests because the framework made them cheap to write is
+exactly the failure mode a capable code generator encourages. Trimmed to four, with the
+reasoning recorded as D-006.
 
 ---
 

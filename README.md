@@ -79,6 +79,19 @@ see [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md). Every entry names the rout
 line responsible. Notably, error responses are not JSON (`403` is `text/plain`, `401` is
 `text/html`), and `POST /articles` never returns the tags you sent it.
 
+## Scope of coverage
+
+Four API tests, covering registration and authentication, duplicate-email rejection,
+article publication and read-back, and the authorization boundary on editing.
+
+`ConduitClient` deliberately covers much more than the tests exercise — favourites,
+comments, follows, tags, delete. That gap is a decision, not unfinished work: the brief
+puts full coverage out of scope and asks for depth over breadth, while a client that
+already speaks the whole API is what makes adding a scenario a test-only change. Every
+method was verified against live responses when written, and what that reconnaissance
+turned up is in [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md). See
+[D-006](DECISIONS.md).
+
 ## Test isolation
 
 Every test builds its own user and its own data through a factory. There is no shared
