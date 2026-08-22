@@ -8,11 +8,10 @@
  * scarce, curated resource rather than something to improvise per test.
  *
  * The failure this prevents is specific and observed: asked to write a login test, a
- * coding agent will reach for `getByLabel('Password')` (no labels exist),
- * `getByRole('textbox')` for the password field (`input[type=password]` has no implicit
- * ARIA role, so it never matches), or `.locator('.form-control')` (two matches on the
- * login page, four in the editor — a strict-mode violation). All three are plausible,
- * idiomatic, and wrong.
+ * coding agent will reach for `getByLabel('Password')` (verified 0 matches — the app has
+ * no labels), unqualified `getByRole('textbox')` (2 matches on the login form), or
+ * `.locator('.form-control')` (2 matches on login, 4 in the editor). All three are
+ * plausible, idiomatic, and wrong here.
  *
  * Forcing locators into a page object does not make an agent smarter. It makes it read
  * the existing, working pattern before writing a new one.

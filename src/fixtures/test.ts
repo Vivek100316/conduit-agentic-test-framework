@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base, type Page } from '@playwright/test';
 
 import { ConduitClient } from '../api/conduit-client';
 import type { Article } from '../api/schemas/article.schema';
@@ -24,6 +24,22 @@ export interface ConduitFixtures {
   otherUser: RegisteredUser;
   /** An article authored by `registeredUser`, created over the API. */
   authoredArticle: Article;
+  /**
+   * A page that is already signed in as `registeredUser`.
+   *
+   * The session is injected straight into `localStorage.jwt`, which is where the app
+   * keeps it (src/middleware.js:52) and what it reads on boot (src/components/App.js:43).
+   *
+   * Deliberately not Playwright's `storageState`: that saves one session to a file and
+   * replays it across tests, which means a shared user — and this framework's isolation
+   * comes from every test owning unique data. `addInitScript` gives the same "skip the
+   * login form" speed while keeping one fresh user per test.
+   *
+   * Signing in through the form is itself covered once, by UI-P0-01. Every other UI test
+   * takes this fast path, because re-proving login on the way to testing something else
+   * only buys extra ways to fail.
+   */
+  authenticatedPage: Page;
 }
 
 /**
@@ -46,6 +62,13 @@ export const test = base.extend<ConduitFixtures>({
 
   authoredArticle: async ({ api, registeredUser }, use) => {
     await use(await api.createArticle(registeredUser.token, buildArticle()));
+  },
+
+  authenticatedPage: async ({ page, registeredUser }, use) => {
+    await page.addInitScript((token: string) => {
+      window.localStorage.setItem('jwt', token);
+    }, registeredUser.token);
+    await use(page);
   },
 });
 
