@@ -1,0 +1,33 @@
+{
+  "name": "conduit-agentic-test-framework",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agentic-first Playwright + TypeScript test framework for the Conduit (RealWorld) app",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:api": "playwright test --project=api",
+    "test:ui": "playwright test --project=ui",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "app:health": "tsx tools/health-check.ts",
+    "verify": "npm run typecheck && npm run lint && npm run test:api"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@faker-js/faker": "^9.3.0",
+    "@playwright/test": "^1.49.1",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.17.0",
+    "eslint-plugin-playwright": "^2.1.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1",
+    "zod": "^3.24.1"
+  }
+}
