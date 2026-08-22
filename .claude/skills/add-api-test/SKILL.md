@@ -37,10 +37,12 @@ curl -s -o /dev/null -w "%{http_code} %{content_type}\n" -X POST \
   -H 'Content-Type: application/json' -d '{"article":{...}}'
 ```
 
-Do **not** read expectations out of `realworld/api/swagger.json`. It documents the
-canonical RealWorld API, not this fork, and it is wrong about registration status codes,
-duplicate-email handling, and field nullability. Assertions written from it fail, and the
-tempting fix — loosening the assertion — hides a real behaviour.
+**Read `realworld/api/swagger.json` to learn what the endpoint is _supposed_ to do — it is
+useful for deciding what is worth testing. Never take an assertion from it.** It documents
+the canonical RealWorld API, not this fork, and it is wrong here about registration status
+codes, duplicate-email handling, and field nullability.
+
+Where the two disagree, you have found something. See step 7.
 
 Watch for three things this app does that surprise people:
 
@@ -81,8 +83,25 @@ npm run verify
 
 Typecheck, lint, scenario coverage, both suites. Green means done.
 
-## When a new deviation turns up
+## 7. When a new deviation turns up — stop and ask
 
-Assert what the app does. Comment the cause with a file and line from the app repository.
-Add a row to `docs/API_DEVIATIONS.md`. Never widen a schema to make a failure disappear
-without first establishing whether the app changed.
+Follow [DEVIATION_POLICY.md](../../../docs/DEVIATION_POLICY.md). The short version:
+
+**Do not decide alone, and do not quietly assert whatever the app happens to do.** The
+specification is the source of truth about intent; the app is the source of truth about
+current state. A gap is a finding, and resolving it needs facts you do not have — whether
+the spec is stale, whether a defect is known, whether the difference was deliberate.
+
+Your job is steps 1–3, then hand over:
+
+1. **Reproduce it.** Once is an observation; deterministic across runs is a finding.
+2. **Find the cause** in the app's source, with a file and line. A deviation you cannot
+   explain may be your own request being wrong.
+3. **Propose a classification** — defect, stale spec, or deliberate difference.
+4. **Ask.** Present evidence, cause, classification, options. Then wait.
+
+Once it is decided, the assertion describes current behaviour — a suite that fails on known
+state gets ignored — but a defect is labelled as one at the assertion, so that the day
+someone fixes the app the test fails loudly and points at why.
+
+Never widen a schema to make a failure disappear without first establishing what changed.

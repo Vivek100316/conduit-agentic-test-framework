@@ -5,10 +5,16 @@ uniqueness token, and cleans up nothing.**
 
 ## Why not reset the database
 
-Conduit uses SQLite. Every Playwright worker talks to the same running app and therefore
-the same database, so the alternatives to uniqueness are all worse:
+**The suite runs fully parallel** — `fullyParallel: true` in `playwright.config.ts`, five
+workers on this machine, six tests in about 1.6 seconds. Everything below is the reasoning
+for _why that is possible_, by listing what was rejected in order to get it.
 
-- **Truncating between tests** serialises the suite — no two tests can run at once.
+Conduit uses SQLite. Every worker talks to the same running app and therefore the same
+database, so the alternatives to uniqueness would each cost the parallelism:
+
+- **Truncating between tests** would serialise the suite. If test A wipes the database
+  while test B is mid-flight, B fails through no fault of its own — so truncation forces
+  `workers: 1`. This is the reason it was rejected, not a property of the suite as built.
 - **Restoring a snapshot file** does the same, and races with an app holding the file open.
 - **Teardown hooks** are the subtlest trap. Cleanup that fails halfway leaves the database
   in a state nobody designed, and the failure surfaces in whichever unlucky test runs next
@@ -20,6 +26,27 @@ users, so they cannot interfere, and there is nothing to undo. The cost is rows 
 behind, which for a local SQLite app is not a cost — under `NODE_ENV=test` the database is
 `:memory:` and disappears with the process; otherwise deleting `db.sqlite3` and restarting
 the app resets everything.
+
+## "No teardown" means data, not resources
+
+Two different things get called cleanup, and only one of them is skipped here.
+
+**Resources are released after every test, automatically.** Playwright owns the lifecycle
+of the `page`, the `BrowserContext`, and the `APIRequestContext` behind the `request`
+fixture; each is disposed when the test that used it finishes, and the browser is closed
+when the run ends. Fixtures with a body after `await use(...)` release in reverse order of
+setup. This repository opens no sockets, files, or database handles of its own —
+`ConduitClient` is a thin wrapper over Playwright's `request`, and nothing talks to SQLite
+directly — so there is nothing left to close by hand. Adding manual disposal would risk
+double-closing something Playwright already owns.
+
+**Data is deliberately left behind.** That is the choice described above: rows persist,
+and the next test does not care because it works with its own.
+
+So "do not add teardown hooks" means _do not delete the data you created_. It has never
+meant leaking connections. If you ever add something that genuinely holds a resource — a
+raw socket, a file handle, a WebSocket — release it in the fixture that created it, after
+`use`.
 
 ## The two rules
 

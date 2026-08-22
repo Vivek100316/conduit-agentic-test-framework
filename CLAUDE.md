@@ -109,6 +109,8 @@ commit — including [AGENTS.md](AGENTS.md), which mirrors this file.
   polling, structure. The single source of truth; not duplicated elsewhere.
 - [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md) — where the app disagrees with the
   spec, and why.
+- [docs/DEVIATION_POLICY.md](docs/DEVIATION_POLICY.md) — what to do when the app and
+  its spec disagree. **Escalate; never decide alone.**
 - [docs/TEST_DATA.md](docs/TEST_DATA.md) — data strategy and its limits.
 - [docs/scenarios/](docs/scenarios/) — prioritised scenario designs. A test claims one by
   putting its ID in the title; `npm run scenarios:coverage` reports the gap.

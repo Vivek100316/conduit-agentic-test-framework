@@ -17,7 +17,18 @@ not edit.
 first. Anything it catches is not a review finding; it is a build failure, and saying it
 again wastes the reader's attention.
 
-**Your job is what a linter cannot see.** Judgement, not syntax.
+**Your job is everything a linter structurally cannot check.**
+
+A linter reads one file's syntax tree. It can prove a banned function was called, or that a
+name is the wrong case, because those are properties of the text. It cannot know whether an
+assertion actually proves the thing the test's title claims, whether a `403` test would
+still pass if the write had silently succeeded, or whether this belongs in the UI suite at
+all. Those need a model of what the app is _for_ — which is what you bring and the linter
+does not have.
+
+Concretely: if a finding could be expressed as a rule that mechanically inspects code, it
+should be a rule, and reporting it here is noise. If answering it requires knowing what the
+test is trying to establish, it is yours.
 
 ## What to review
 
@@ -42,19 +53,29 @@ registration, or `201` on create, means the test was written from
 Equally: if a test asserts something that _contradicts_ a documented deviation, ask whether
 the app changed. That is a finding worth surfacing, not a test to fix.
 
+**A deviation asserted without being labelled is a finding of its own.** Following
+[DEVIATION_POLICY.md](../../../docs/DEVIATION_POLICY.md), a test pinning behaviour that
+contradicts the spec must say at the assertion which it is — defect, stale spec, or
+deliberate difference — so that a future fix to the app fails loudly and points at why. An
+unannotated `expect(status).toBe(404)` where the spec says `422` silently promotes a bug to
+expected behaviour. Flag it.
+
 ### Is it isolated?
 
 - Data built by a factory, unique per test.
 - No absolute counts against the tag sidebar or Global Feed — they are shared by every test
   in the run. Relative assertions only.
-- No teardown hooks. Cleanup that fails halfway is worse than no cleanup.
+- No hooks deleting the **data** a test created — cleanup that fails halfway is worse than
+  none. This does not apply to **resources**: anything holding a socket or handle must
+  still be released in the fixture that opened it. See `docs/TEST_DATA.md`.
 - No dependence on another test having run first.
 
 ### Is it at the right layer?
 
 A UI test that re-proves an API rule costs browser startup and buys nothing. A UI test that
-signs in through the form to reach some other screen should use `authenticatedPage`
-instead — signing in is proved once, by `UI-P0-01`.
+signs in through the form to reach some other screen should inject the session instead —
+`authenticatedPage` for an ordinary user, `signInAs(page, user)` when the test needs a
+specific one. Signing in is proved once, by `UI-P0-01`.
 
 ### Does it claim a real scenario?
 

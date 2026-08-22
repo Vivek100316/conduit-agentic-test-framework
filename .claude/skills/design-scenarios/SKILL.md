@@ -37,24 +37,46 @@ Stop if it fails. Do not design scenarios against an app you cannot observe.
 
 ### 2. Map the feature's real surface
 
-Read the Express routes backing the feature and enumerate, concretely: every endpoint and
-method; whether auth is `required` or `optional` (`routes/auth.js`); every validation
-branch and early return; every error path, including ones falling through to a generic
-handler.
+**Read from the checked-out app under test — the same working tree the running app was
+started from.** By default that is a sibling checkout of
+`node-express-sequelize-realworld-example-app`; `docs/APP_SETUP.md` says how it is set up.
+Do not read from GitHub, another branch, or a different fork: a citation to
+`routes/api/articles.js:112` is only meaningful if it points at the code that produced the
+behaviour you observed.
 
-Then read the React components. Enumerate fields, controls, and rendered states. Remember
-the app has **no `data-testid` attributes** and its inputs have no `id`, `name`, or
-`<label>` — note what a locator would actually have to anchor on.
+Record the commit you read (`git -C <app> rev-parse --short HEAD`) in the output header.
+Line numbers rot, and a scenario file that cannot say which commit it describes cannot be
+checked later.
+
+Backend: enumerate every endpoint and method; whether auth is `required` or `optional`
+(`routes/auth.js`); every validation branch and early return; every error path, including
+ones that fall through to a generic handler.
+
+Frontend: enumerate the fields, controls, and rendered states, and note what a locator
+would actually have to anchor on. On the screens modelled so far there are no
+`data-testid` attributes and inputs carry no `id`, `name`, or `<label>` — **but check the
+screen in front of you rather than assuming that holds.** It is an observation about
+particular components at a particular commit, not a property of the app.
 
 ### 3. Observe, do not assume
 
 Issue each request against the running app and record the **actual** status, content type,
 and body shape.
 
-Do not read expectations from `realworld/api/swagger.json`. It documents the canonical
-RealWorld API, not this fork, and is known wrong about status codes, error bodies, and
-field nullability. Anything you find goes under **Observed deviations** and into
-[API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md).
+**Read `realworld/api/swagger.json` — it is the best statement of what the app is
+_supposed_ to do, and therefore a good source of scenarios worth having.** It is not a
+source of assertions: it documents the canonical RealWorld API, not this fork, and is known
+wrong here about status codes, error bodies, and field nullability.
+
+So use both, for different purposes. The spec tells you a duplicate email ought to be
+rejected — that scenario belongs in the design regardless. The running app tells you it is
+rejected with `404 text/html` rather than `422 JSON` — that goes under **Observed
+deviations**, into [API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md), and gets
+**reported to the user**, classified as a likely defect, stale spec, or deliberate
+difference.
+
+Do not decide which of the two is correct. That is a human call —
+[DEVIATION_POLICY.md](../../../docs/DEVIATION_POLICY.md).
 
 ### 4. Assign priority by consequence, not difficulty
 

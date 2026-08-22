@@ -77,6 +77,45 @@ Test titles state the observable outcome in the present tense, without "should":
 ❌ test('should test login functionality', ...)
 ```
 
+## Locators
+
+Locators live only in `src/pages/`. Within that, follow Playwright's own
+[locator priority](https://playwright.dev/docs/locators):
+
+`getByRole` → `getByText` → `getByLabel` → `getByPlaceholder` → `getByAltText` →
+`getByTitle` → `getByTestId` → semantic CSS → XPath.
+
+XPath is **last, not banned**. It is legitimate where nothing above reaches — axis
+traversal to an ancestor or sibling that carries no usable attribute — and when used it
+needs a comment saying what was tried first. Treat reaching for it as the strongest
+argument for asking the app's owners for a `data-testid`.
+
+Verify counts against the running app before committing a locator. On the screens modelled
+so far, `getByLabel` and `getByTestId` match nothing, so `getByRole` with a name and
+`getByPlaceholder` do the work — an observation about specific components at one commit,
+not a rule about the app.
+
+### Scoping, and dynamic values
+
+Uniqueness normally comes from **narrowing**, not from a longer selector:
+
+```ts
+✅ page.getByRole('navigation').getByRole('link', { name: 'Settings' });
+✅ page.locator('.article-preview').filter({ hasText: title });
+❌ page.locator('nav > ul > li:nth-child(3) > a');
+```
+
+Dynamic values are **parameters**, not new locators. A page object exposes a method that
+takes the value and returns a `Locator`:
+
+```ts
+✅ articleCard(title: string): Locator
+❌ thirdArticleCard: Locator
+```
+
+A bare `.nth(n)` is acceptable only when order is the thing under test — "the first article
+in the feed" — and the test should say so.
+
 ## Assertions
 
 **Always use web-first assertions.** They retry until the timeout; the manual form

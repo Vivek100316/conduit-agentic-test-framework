@@ -80,6 +80,8 @@ documentation the change invalidates in the same commit.
 - [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md) — naming, assertions,
   polling, structure
 - [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md) — where the app disagrees with the spec
+- [docs/DEVIATION_POLICY.md](docs/DEVIATION_POLICY.md) — what to do when the app and
+  its spec disagree. **Escalate; never decide alone.**
 - [docs/TEST_DATA.md](docs/TEST_DATA.md) — data strategy
 - [DECISIONS.md](DECISIONS.md) — architecture decisions and what would change them
 - [docs/APP_SETUP.md](docs/APP_SETUP.md) — running the app under test

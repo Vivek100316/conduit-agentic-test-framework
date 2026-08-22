@@ -27,8 +27,19 @@ Put the scenario ID from `docs/scenarios/` in the test title: `[UI-P1-01]`.
 
 ## 3. Never put a locator in a test
 
-Locators outside `src/pages/` are a lint error, and the lint runs automatically the moment
-you save the file.
+Two mechanisms enforce this, and it is worth knowing they are separate things:
+
+- **The rule.** `eslint-rules/no-locators-outside-page-objects.js` is a custom ESLint rule
+  that reports any `getBy*` or `.locator(` in a file outside `src/pages/`. It fails
+  `npm run lint`, and therefore `npm run verify`.
+- **The moment you hear about it.** `.claude/hooks/lint-changed.mjs` is a Claude Code
+  `PostToolUse` hook, registered in `.claude/settings.json`. It runs ESLint and Prettier
+  against a file as soon as a `Write` or `Edit` touches it, and exits with code `2` so the
+  message comes back as feedback to act on.
+
+The rule alone would catch the violation at commit time, by which point you have moved on.
+The hook is what makes the correction arrive in the same train of thought. If you are
+working outside Claude Code, only the rule applies — run `npm run lint` yourself.
 
 Reuse a page object if one fits. Otherwise:
 
@@ -38,8 +49,33 @@ npm run new:page -- <Name>
 
 ## 4. Derive selectors from the running DOM, not from memory
 
-This app has **zero** `data-testid` attributes and cannot be modified. Its form inputs have
-no `id`, no `name`, and no `<label>`. Verified counts on the login form:
+Follow Playwright's [locator priority](https://playwright.dev/docs/locators): `getByRole`,
+`getByText`, `getByLabel`, `getByPlaceholder`, `getByAltText`, `getByTitle`, `getByTestId`.
+Below those: semantic CSS (`.error-messages`, `.article-content`), then XPath as a **last
+resort** — legitimate for axis traversal nothing else reaches, but it needs a comment
+saying why, and it is the strongest case for asking the app's owners for a test id.
+
+**Scope rather than out-clever.** Most screens are lists of similar things, so uniqueness
+normally comes from narrowing, not from a longer selector:
+
+```ts
+page.getByRole('navigation').getByRole('link', { name: 'Settings' }); // parent → child
+page.locator('.article-preview').filter({ hasText: title }); // pick one of many
+```
+
+**Dynamic values are parameters, not new locators.** Expose a method that takes the value
+and returns a `Locator` — `articleCard(title)` — rather than a field per instance.
+`ArticlePage.tag(name)` is the existing example. Avoid a bare `.nth(n)` unless order is
+genuinely what the test is about, and say so when it is.
+
+The screens modelled so far have no `data-testid` attributes, and their form inputs have no
+`id`, `name`, or `<label>` — so `getByLabel` and `getByTestId` find nothing on them, and
+`getByRole` with a name or `getByPlaceholder` does the work. **That is an observation about
+particular screens at a particular commit, not a property of the app.** A screen nobody has
+modelled yet may be entirely different, and if test ids are ever added they become the
+preferred option. Check; do not inherit the conclusion.
+
+Counts measured on the login form, as calibration for what checking looks like:
 
 ```
 count=0  getByLabel('Password')            ← no labels exist anywhere
@@ -56,11 +92,31 @@ live DOM rather than guessing.
 Page object methods are named for intent: `editor.publish(article)`, not
 `editor.clickPublishButton()`. Intent survives a redesign; mechanics do not.
 
-## 5. Seed state over the API
+## 5. Seed state over the API, with the session the test actually needs
 
-Use `authenticatedPage`, which registers a fresh user over the API and injects the JWT into
-`localStorage`. Do not sign in through the form to reach some other screen — signing in is
-proved once, by `UI-P0-01`, and re-proving it only adds ways to fail.
+`authenticatedPage` is a **convenience for the common case** — a page signed in as some
+ordinary user. It is not the mechanism, and it is not mandatory.
+
+The mechanism is `signInAs(page, user)` in `src/fixtures/session.ts`, which establishes a
+session for **whichever** user you hand it. Reach for it directly whenever "some ordinary
+user" is not what the test is about:
+
+```ts
+const author = await api.register(buildUser());
+const reader = await api.register(buildUser());
+await signInAs(page, reader); // …then assert what a reader sees of author's article
+```
+
+Conduit has no roles today, so nothing here needs more than one session. When admin, guest,
+or moderator views appear, they compose the same way — build the user over the API, hand it
+to `signInAs`. `signOut(page)` is the deliberate opposite for anonymous-visitor tests.
+
+Both must be called **before the first navigation**: they use `addInitScript`, which runs
+before page scripts on each navigation, so calling either after `goto` leaves the loaded
+app unaware.
+
+Do not sign in through the form to reach some other screen. Signing in is proved once, by
+`UI-P0-01`, and re-proving it only adds ways to fail.
 
 ## 6. Assert on what a user can observe
 
