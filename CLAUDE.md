@@ -33,10 +33,17 @@ this fork, and they disagree — registration returns `200` not `201`, a duplica
 returns `404 text/html` not `422 JSON`, and `bio` is `""` from register but `null` from
 login.
 
-**Issue the request against the running app and assert what it actually does.** If you
-find a new deviation, assert reality, comment the cause with a file and line from the app,
-and add a `DECISIONS.md` entry. Never loosen a schema to make a failure go away without
-first checking whether the app changed.
+**Issue the request against the running app and assert what it actually does.**
+[docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md) catalogues every deviation found so far,
+with the route file and line that causes each one — read it before writing an API test.
+
+Two that bite immediately: error responses are **not JSON** (403 is `text/plain`, 401 is
+`text/html`), which is why every negative path uses a `*Raw` client method; and
+`POST /articles` never echoes the tags you sent, though a subsequent read does.
+
+If you find a new deviation, assert reality, comment the cause with a file and line from
+the app, and add a row to `docs/API_DEVIATIONS.md`. Never loosen a schema to make a
+failure go away without first checking whether the app changed.
 
 ## Locators, specifically
 
@@ -72,6 +79,8 @@ request. Update any documentation the change invalidates in the same commit.
 
 - [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md) — naming, assertions,
   polling, structure. The single source of truth; not duplicated elsewhere.
+- [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md) — where the app disagrees with the
+  spec, and why.
 - [DECISIONS.md](DECISIONS.md) — why the framework is shaped this way, and what would
   change it.
 - [docs/APP_SETUP.md](docs/APP_SETUP.md) — running the app under test.

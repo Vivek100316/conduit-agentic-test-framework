@@ -47,6 +47,7 @@ structurally, rather than asking a contributor to remember something.
 | `getByRole('textbox')` for a password field — `input[type=password]` has no implicit ARIA role | Same rule; the page object holds a selector verified against the real DOM |
 | `.locator('.form-control')` — 2 matches on login, 4 in the editor | Same rule |
 | `expect(status).toBe(422)` on duplicate registration, because the spec says so | Raw HTTP is a lint error outside `src/api/`; the client's schemas encode observed behaviour |
+| `expect(created.tagList).toEqual(sentTags)` — the create response never echoes tags | Client method documents it; `ART-P1-01` pins the real behaviour |
 | `await page.waitForTimeout(1000)` | Lint error |
 | `expect(await x.isVisible()).toBe(true)` — evaluates once, never retries | Lint error (`prefer-web-first-assertions`) |
 | Assumes `bio` is a `string` | Runtime schema validation fails at the call site, naming the route |
@@ -72,6 +73,24 @@ docs/            Standards, app setup
 Conventions live in [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md);
 architecture decisions and their rejected alternatives in [DECISIONS.md](DECISIONS.md);
 how AI was used to build this, including what it got wrong, in [AI_USAGE.md](AI_USAGE.md).
+
+Where the app disagrees with the RealWorld spec — and it does, in nine catalogued ways —
+see [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md). Every entry names the route file and
+line responsible. Notably, error responses are not JSON (`403` is `text/plain`, `401` is
+`text/html`), and `POST /articles` never returns the tags you sent it.
+
+## Scope of coverage
+
+Four API tests, covering registration and authentication, duplicate-email rejection,
+article publication and read-back, and the authorization boundary on editing.
+
+`ConduitClient` deliberately covers much more than the tests exercise — favourites,
+comments, follows, tags, delete. That gap is a decision, not unfinished work: the brief
+puts full coverage out of scope and asks for depth over breadth, while a client that
+already speaks the whole API is what makes adding a scenario a test-only change. Every
+method was verified against live responses when written, and what that reconnaissance
+turned up is in [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md). See
+[D-006](DECISIONS.md).
 
 ## Test isolation
 

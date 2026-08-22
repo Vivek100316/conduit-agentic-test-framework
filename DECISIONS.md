@@ -109,6 +109,42 @@ start both processes, wait on `app:health`, then run `verify`.
 
 ---
 
+## D-006 — Four API tests, deliberately, against a client that covers far more
+
+**Chosen.** The suite covers four critical flows: registration and authentication,
+duplicate-email rejection, article publication and read-back, and the authorization
+boundary on editing. Each earns its place by covering something the others do not.
+
+`ConduitClient`, by contrast, covers the full API surface — favourites, comments,
+follows, tags, delete, unfollow. That gap between framework surface and test coverage is
+intentional, not unfinished work.
+
+**Rejected: a test per endpoint.** An earlier revision of this branch had seventeen. They
+passed, they were fast, and they were the wrong deliverable: the brief asks for three to
+five tests covering critical flows, puts full coverage explicitly out of scope, and says
+depth over breadth. Seventeen tests demonstrate that the client works. Four well-chosen
+ones plus a scenario design demonstrate judgement about what is worth testing, which is
+the harder thing to show and the thing actually being assessed.
+
+**Rejected: trimming the client to match the tests.** The brief constrains test count, not
+framework surface, and a client that already speaks the whole API is what makes adding
+coverage a test-only change. Every method was verified against live responses when it was
+written, and the deviations found in the process are catalogued in
+`docs/API_DEVIATIONS.md` — that reconnaissance is preserved regardless of how many
+assertions ship.
+
+**Consequence, made visible rather than hidden.** The `design-scenarios` skill produces a
+prioritised scenario list per feature, and `scenarios:coverage` reports designed against
+implemented. The gap is therefore a number a reviewer can see and interrogate, with an
+"explicitly not covered" section giving reasons — rather than an omission they have to
+notice.
+
+**Would flip if:** this were a real suite guarding a real deployment, where breadth is the
+point and every endpoint deserves a regression test. The framework is built so that
+closing the gap is additive: the client, fixtures, factories, and guardrails do not change.
+
+---
+
 ## D-005 — The app and the framework run on different Node versions
 
 **Chosen.** The app under test is pinned to Node 16 via nvm; the framework runs on
