@@ -133,6 +133,39 @@ document is a liability the moment someone asks where it came from.
 
 ---
 
+### 6. The tag assertion the probe prevented (PR2)
+
+Writing the article suite, the obvious test for creating an article with tags is:
+
+```ts
+const created = await api.createArticle(token, input);
+expect(created.tagList).toEqual(input.tagList); // ← what the spec implies
+```
+
+Before writing it, the endpoint was probed five times:
+
+```
+run 1: create=[]  get=['alpha…', 'beta…']
+run 2: create=[]  get=['alpha…', 'beta…']
+run 3: create=[]  get=['alpha…', 'beta…']
+```
+
+The create response **never** echoes tags. `setArticleTags` in
+`routes/api/articles.js:5` does not return its inner `Tag.findAll(...).then(...)` chain,
+so `Promise.all` resolves and the article is serialised before the association is written.
+
+This is recorded not because an AI got it wrong, but because it is the case the process
+was designed to catch: a plausible, spec-endorsed assertion that fails against the real
+app. Had it been written from the spec and then seen to fail, the tempting fix would have
+been to loosen the assertion or add a wait — treating a deterministic app behaviour as
+flake. Probing first meant the deviation was documented (`ART-P1-01`,
+`docs/API_DEVIATIONS.md`) instead of papered over.
+
+All seventeen tests in PR2 passed on their first run, which is the intended consequence of
+observing before asserting rather than a sign that the tests are weak.
+
+---
+
 ## Where AI was used successfully
 
 **Environment archaeology.** Getting the app running took four discoveries — an empty git

@@ -2,12 +2,29 @@ import type { APIRequestContext, APIResponse } from '@playwright/test';
 import type { ZodSchema } from 'zod';
 
 import { apiUrl } from '../config/env';
+import {
+  articleResponseSchema,
+  commentResponseSchema,
+  commentsResponseSchema,
+  profileResponseSchema,
+  tagsResponseSchema,
+  type Article,
+  type Comment,
+  type Profile,
+} from './schemas/article.schema';
 import { authUserResponseSchema, type AuthUser } from './schemas/user.schema';
 
 export interface RegisterInput {
   username: string;
   email: string;
   password: string;
+}
+
+export interface ArticleInput {
+  title: string;
+  description: string;
+  body: string;
+  tagList: string[];
 }
 
 /**
@@ -50,6 +67,132 @@ export class ConduitClient {
 
   async currentUserRaw(token: string): Promise<APIResponse> {
     return this.request.get(apiUrl('/user'), { headers: authHeader(token) });
+  }
+
+  // --- Articles ---------------------------------------------------------------
+
+  /**
+   * Note: the returned article's `tagList` is always empty, even when tags were sent.
+   * That is the app's behaviour, not a bug in this client — read the article back to
+   * see its tags. See docs/API_DEVIATIONS.md.
+   */
+  async createArticle(token: string, input: ArticleInput): Promise<Article> {
+    const response = await this.createArticleRaw(token, input);
+    return (await parse(response, articleResponseSchema, 'POST /articles')).article;
+  }
+
+  async createArticleRaw(token: string, input: ArticleInput): Promise<APIResponse> {
+    return this.request.post(apiUrl('/articles'), {
+      headers: authHeader(token),
+      data: { article: input },
+    });
+  }
+
+  async getArticle(slug: string, token?: string): Promise<Article> {
+    const response = await this.getArticleRaw(slug, token);
+    return (await parse(response, articleResponseSchema, `GET /articles/${slug}`)).article;
+  }
+
+  async getArticleRaw(slug: string, token?: string): Promise<APIResponse> {
+    return this.request.get(apiUrl(`/articles/${slug}`), {
+      headers: token === undefined ? {} : authHeader(token),
+    });
+  }
+
+  async updateArticle(
+    token: string,
+    slug: string,
+    patch: Partial<ArticleInput>
+  ): Promise<Article> {
+    const response = await this.updateArticleRaw(token, slug, patch);
+    return (await parse(response, articleResponseSchema, `PUT /articles/${slug}`)).article;
+  }
+
+  async updateArticleRaw(
+    token: string,
+    slug: string,
+    patch: Partial<ArticleInput>
+  ): Promise<APIResponse> {
+    return this.request.put(apiUrl(`/articles/${slug}`), {
+      headers: authHeader(token),
+      data: { article: patch },
+    });
+  }
+
+  /** Returns 204 with an empty body on success, so there is no typed variant. */
+  async deleteArticleRaw(token: string, slug: string): Promise<APIResponse> {
+    return this.request.delete(apiUrl(`/articles/${slug}`), { headers: authHeader(token) });
+  }
+
+  async favoriteArticle(token: string, slug: string): Promise<Article> {
+    const response = await this.request.post(apiUrl(`/articles/${slug}/favorite`), {
+      headers: authHeader(token),
+    });
+    return (await parse(response, articleResponseSchema, `POST /articles/${slug}/favorite`))
+      .article;
+  }
+
+  async unfavoriteArticle(token: string, slug: string): Promise<Article> {
+    const response = await this.request.delete(apiUrl(`/articles/${slug}/favorite`), {
+      headers: authHeader(token),
+    });
+    return (await parse(response, articleResponseSchema, `DELETE /articles/${slug}/favorite`))
+      .article;
+  }
+
+  // --- Comments ---------------------------------------------------------------
+
+  async addComment(token: string, slug: string, body: string): Promise<Comment> {
+    const response = await this.request.post(apiUrl(`/articles/${slug}/comments`), {
+      headers: authHeader(token),
+      data: { comment: { body } },
+    });
+    return (await parse(response, commentResponseSchema, `POST /articles/${slug}/comments`))
+      .comment;
+  }
+
+  async listComments(slug: string, token?: string): Promise<Comment[]> {
+    const response = await this.request.get(apiUrl(`/articles/${slug}/comments`), {
+      headers: token === undefined ? {} : authHeader(token),
+    });
+    return (await parse(response, commentsResponseSchema, `GET /articles/${slug}/comments`))
+      .comments;
+  }
+
+  async deleteCommentRaw(token: string, slug: string, commentId: number): Promise<APIResponse> {
+    return this.request.delete(apiUrl(`/articles/${slug}/comments/${commentId}`), {
+      headers: authHeader(token),
+    });
+  }
+
+  // --- Profiles and tags ------------------------------------------------------
+
+  async getProfile(username: string, token?: string): Promise<Profile> {
+    const response = await this.request.get(apiUrl(`/profiles/${username}`), {
+      headers: token === undefined ? {} : authHeader(token),
+    });
+    return (await parse(response, profileResponseSchema, `GET /profiles/${username}`)).profile;
+  }
+
+  async followUser(token: string, username: string): Promise<Profile> {
+    const response = await this.request.post(apiUrl(`/profiles/${username}/follow`), {
+      headers: authHeader(token),
+    });
+    return (await parse(response, profileResponseSchema, `POST /profiles/${username}/follow`))
+      .profile;
+  }
+
+  async unfollowUser(token: string, username: string): Promise<Profile> {
+    const response = await this.request.delete(apiUrl(`/profiles/${username}/follow`), {
+      headers: authHeader(token),
+    });
+    return (await parse(response, profileResponseSchema, `DELETE /profiles/${username}/follow`))
+      .profile;
+  }
+
+  async listTags(): Promise<string[]> {
+    const response = await this.request.get(apiUrl('/tags'));
+    return (await parse(response, tagsResponseSchema, 'GET /tags')).tags;
   }
 }
 
