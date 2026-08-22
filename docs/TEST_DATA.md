@@ -49,17 +49,17 @@ roughly an order of magnitude slower.
 `unique()` returns a base-36 timestamp plus a random suffix — ordered enough to read in a
 database row, random enough for workers starting in the same millisecond.
 
-| Field | Unique | Why |
-| --- | --- | --- |
-| `username`, `email` | Yes | Enforced unique by the app |
-| Article `title` | Yes | Lets a feed or search assertion find exactly one article |
-| Tag names | Yes | **The tag list is global.** A fixed tag would be visible to every other test |
-| `password` | No | Constant and readable; nothing asserts on it |
-| `description`, `body` | Token only | Dull on purpose — see rule 1 |
+| Field                 | Unique     | Why                                                                          |
+| --------------------- | ---------- | ---------------------------------------------------------------------------- |
+| `username`, `email`   | Yes        | Enforced unique by the app                                                   |
+| Article `title`       | Yes        | Lets a feed or search assertion find exactly one article                     |
+| Tag names             | Yes        | **The tag list is global.** A fixed tag would be visible to every other test |
+| `password`            | No         | Constant and readable; nothing asserts on it                                 |
+| `description`, `body` | Token only | Dull on purpose — see rule 1                                                 |
 
 ## The limit of this approach
 
-Uniqueness isolates *records*, not *aggregates*. Conduit's tag sidebar and Global Feed are
+Uniqueness isolates _records_, not _aggregates_. Conduit's tag sidebar and Global Feed are
 shared by every test in a run, so an absolute count against them is racy by construction:
 
 ```ts

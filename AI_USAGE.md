@@ -10,6 +10,33 @@ discipline exists because of what is recorded here.
 
 ---
 
+## How it was actually driven
+
+Claude Code, in a single long session, with the app running locally throughout. The work
+was split into four pull requests (#1 skeleton and guardrails, #2 API coverage, #3 UI
+coverage, #4 agentic infrastructure), each gated on `npm run verify`.
+
+The prompts were short and directional rather than specified — the interesting ones are the
+corrections, because that is where the design actually came from. Verbatim:
+
+| Prompt                                                                                                                                                    | What it changed                                                                                                                                                                                                                                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _"Let's first discuss on the test strategies, test tools and test infra, design pattern extra"_                                                           | Design discussion before any code. Nothing was written for the first several exchanges.                                                                                                                                                                                     |
+| _"since we can't force reviewers to have docker, what your thoughts on testcontainers?"_                                                                  | Forced the containerisation question to a conclusion. Testcontainers **is** a Docker client, so it fails the same constraint — and investigating the Postgres path found `models/index.js` only uses Postgres under `NODE_ENV=production`, with SSL required. Became D-003. |
+| _"Also, there are some inputs by Gemini, let me know if you are aligned or have different thought process?"_ (followed by a pasted architecture proposal) | Produced the cross-check in §2–§5 below. Roughly 60% aligned; the two most specific recommendations were wrong for this app.                                                                                                                                                |
+| _"we don't need to so much test cases count, 3-4 tests should be enough"_                                                                                 | Cut the API suite from seventeen tests to four. See §6.                                                                                                                                                                                                                     |
+| _"and what about test data?"_                                                                                                                             | Exposed that data management was the thinnest part of the framework. Produced `docs/TEST_DATA.md`, the shared `unique()` helper, and the removal of faker from anything asserted on.                                                                                        |
+| _"what kind of a format we are using?"_                                                                                                                   | Exposed that Prettier was declared in `package.json` but never configured or enforced — 39 files failed `prettier --check`. Now wired into `verify` and the edit hook.                                                                                                      |
+
+Two of those six are the user catching the framework doing the thing it was built to
+prevent: claiming something was handled when it was only declared.
+
+The mechanical prompts — "add an API test for X", "why did this fail" — were largely
+replaced by the skills in `.claude/skills/`, which is the point of them. The generated
+scenario designs in `docs/scenarios/` came from `design-scenarios`.
+
+---
+
 ## Where AI was wrong, and how it was caught
 
 ### 1. Claude recommended a Node version that does not exist for this machine
@@ -40,7 +67,7 @@ curl -s https://nodejs.org/dist/v14.21.3/ | grep -o 'node-v14.21.3-darwin-[a-z0-
 change that breaks webpack 4. Recorded as D-005.
 
 The general lesson shaped the framework: an AI's version and compatibility claims are
-plausible reconstructions, and plausible is not the same as true on *this* machine.
+plausible reconstructions, and plausible is not the same as true on _this_ machine.
 
 ---
 
@@ -171,7 +198,7 @@ They passed and they were fast, and they were still the wrong deliverable — th
 for three to five tests covering critical flows, puts full coverage out of scope, and says
 depth over breadth. Producing more tests because the framework made them cheap to write is
 exactly the failure mode a capable code generator encourages. Trimmed to four, with the
-reasoning recorded as D-006.
+reasoning recorded as D-004.
 
 ---
 
@@ -184,7 +211,7 @@ While writing the guardrail rule in PR1, Claude asserted — confidently, and wi
 supporting reasoning — that:
 
 > `getByRole('textbox')` cannot find a password field: `input[type=password]` has **no
-> implicit ARIA role**, so it never matches, while the `type=email` field *does* map to
+> implicit ARIA role**, so it never matches, while the `type=email` field _does_ map to
 > `textbox`. This fails asymmetrically.
 
 The premise is true. [HTML-AAM][htmlaam] does specify **no corresponding role** for
@@ -215,8 +242,8 @@ nothing — and the half that did not was the more specific, more confident half
 because `getByRole` fails, but because it is explicit about what the selector is really
 coupled to and does not depend on a role mapping the spec says should not exist.
 
-**Why it belongs at the top of this file.** The whole framework rests on one rule — *do
-not reason from a specification to what the running system does; go and observe it*. That
+**Why it belongs at the top of this file.** The whole framework rests on one rule — _do
+not reason from a specification to what the running system does; go and observe it_. That
 rule was written for the RealWorld swagger file. It applies just as well to the ARIA spec,
 to Playwright's documentation, and to a model's confident recollection of either. A
 guardrail catches an agent's bad selector; nothing but running the thing catches a
@@ -233,7 +260,7 @@ have shipped broken had it not been executed once.
 
 **The hook's formatter did not exist.** `.claude/hooks/lint-changed.mjs` was written with
 `eslint --format compact`, which is correct for ESLint 8 and removed from core in ESLint 9.
-The hook still exited 2, so it *looked* like it was working — it was reporting a formatter
+The hook still exited 2, so it _looked_ like it was working — it was reporting a formatter
 error as if it were a lint violation:
 
 ```
@@ -248,8 +275,8 @@ reading what came back, rather than assuming exit code 2 meant success.
 **The scaffolder generated tests that failed the build.** The template put `[TODO-P0-01]`
 in the test title as a placeholder. That string matches the scenario ID pattern, so
 `scenarios:coverage` correctly flagged every freshly generated file as claiming an ID no
-design defines — making the generator's whole purpose, *produce something that is green
-before you edit it*, false on first use. Changed to `REPLACE-WITH-SCENARIO-ID`, which
+design defines — making the generator's whole purpose, _produce something that is green
+before you edit it_, false on first use. Changed to `REPLACE-WITH-SCENARIO-ID`, which
 cannot parse as an ID. Verified by generating a file and running it: green in 676ms,
 untouched.
 

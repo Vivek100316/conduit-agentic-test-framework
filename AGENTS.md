@@ -66,14 +66,14 @@ documentation the change invalidates in the same commit.
 
 ## Available skills and subagents
 
-| Name | Use for |
-| --- | --- |
-| `add-api-test` | Covering an endpoint |
-| `add-ui-test` | Covering a screen or journey |
-| `design-scenarios` | Planning coverage for a feature |
-| `triage-failure` | A red test — **before** changing anything |
-| `selector-scout` | Verified locators for an unmodelled screen |
-| `test-reviewer` | Reviewing a test before a pull request |
+| Name               | Use for                                    |
+| ------------------ | ------------------------------------------ |
+| `add-api-test`     | Covering an endpoint                       |
+| `add-ui-test`      | Covering a screen or journey               |
+| `design-scenarios` | Planning coverage for a feature            |
+| `triage-failure`   | A red test — **before** changing anything  |
+| `selector-scout`   | Verified locators for an unmodelled screen |
+| `test-reviewer`    | Reviewing a test before a pull request     |
 
 ## Reference
 

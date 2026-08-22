@@ -22,7 +22,7 @@ A scenario you cannot cite is a scenario you invented. Delete it.
 
 This rule exists because "verify login with valid credentials" is the kind of output that
 looks like test design and contains no information — it would be identical for any
-application ever built. The value of this skill is entirely in what it notices about *this*
+application ever built. The value of this skill is entirely in what it notices about _this_
 app.
 
 ## Procedure
@@ -58,11 +58,11 @@ field nullability. Anything you find goes under **Observed deviations** and into
 
 ### 4. Assign priority by consequence, not difficulty
 
-| | Definition | Examples |
-| --- | --- | --- |
-| **P0** | The feature is unusable or unsafe if this breaks. Happy path, auth boundaries, data integrity. | A registered user can log in; a user cannot edit another user's article |
+|        | Definition                                                                                              | Examples                                                                           |
+| ------ | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **P0** | The feature is unusable or unsafe if this breaks. Happy path, auth boundaries, data integrity.          | A registered user can log in; a user cannot edit another user's article            |
 | **P1** | Meaningful degradation; the feature still functions. Validation, alternate flows, cross-entity effects. | A duplicate email is rejected; a published article appears on its author's profile |
-| **P2** | Edge, cosmetic, or rare. | Unicode in titles; pagination past the last page; empty-state copy |
+| **P2** | Edge, cosmetic, or rare.                                                                                | Unicode in titles; pagination past the last page; empty-state copy                 |
 
 Two rules that override intuition. An **authorization** scenario is always P0 even when it
 feels routine — a permission hole is a trust failure, not a bug. And anything depending on
@@ -80,9 +80,9 @@ and its presentation can fail independently.
 One file per feature at `docs/scenarios/<feature>.md`, with stable IDs:
 
 ```markdown
-| ID | Scenario | Priority | Layer | Evidence |
-| --- | --- | --- | --- | --- |
-| LOGIN-P0-01 | Registered user authenticates and receives a JWT | P0 | API | routes/api/users.js:46 |
+| ID          | Scenario                                         | Priority | Layer | Evidence               |
+| ----------- | ------------------------------------------------ | -------- | ----- | ---------------------- |
+| LOGIN-P0-01 | Registered user authenticates and receives a JWT | P0       | API   | routes/api/users.js:46 |
 ```
 
 IDs are **stable and never reused**. A test claims one by putting it in its title, and

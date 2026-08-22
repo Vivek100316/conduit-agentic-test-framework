@@ -17,30 +17,50 @@ here, the upstream guide applies.
 A standard that a machine can check is a lint rule, not a paragraph. Prose is reserved
 for judgement calls that tooling genuinely cannot decide.
 
-| Enforced automatically | Documented here only |
-| --- | --- |
-| Naming conventions (`@typescript-eslint/naming-convention`) | What makes a good test title |
-| Formatting, import order (Prettier + `import/order`) | When to extend a page object vs. add one |
-| No `waitForTimeout`, no manual polling loops | Assertion granularity |
-| No locators outside page objects | Scenario priority assignment |
-| No floating promises, no non-null `!` in tests | When a deviation is a bug vs. a documented quirk |
-| File and directory naming | |
+| Enforced automatically                                      | Documented here only                             |
+| ----------------------------------------------------------- | ------------------------------------------------ |
+| Naming conventions (`@typescript-eslint/naming-convention`) | What makes a good test title                     |
+| Formatting (Prettier, `npm run format:check`)               | When to extend a page object vs. add one         |
+| No `waitForTimeout`, no manual polling loops                | Assertion granularity                            |
+| No locators outside page objects                            | Scenario priority assignment                     |
+| No floating promises, no non-null `!` in tests              | When a deviation is a bug vs. a documented quirk |
+| File and directory naming                                   |                                                  |
 
 Run `npm run verify` before every push. It is the definition of done: typecheck, lint,
 docs check, and the affected test suites.
+
+## Formatting
+
+**Prettier owns formatting. Do not hand-format, and do not argue with it.**
+
+```bash
+npm run format        # rewrite
+npm run format:check  # verify — part of npm run verify
+```
+
+Configuration lives in `.prettierrc.json`: 100-column lines, single quotes, semicolons,
+ES5 trailing commas. The values matter far less than the fact that nobody has to think
+about them.
+
+`eslint-config-prettier` is applied last in `eslint.config.js`, which disables every ESLint
+rule that overlaps with Prettier. ESLint judges correctness; Prettier decides appearance. A
+repository where the two disagree teaches contributors to ignore both.
+
+The `PostToolUse` hook checks formatting alongside lint on every edit, so an unformatted
+file is reported immediately with the command that fixes it.
 
 ## Naming
 
 Follows Google TS Style Guide. The rules people get wrong most often:
 
-| Construct | Case | Example |
-| --- | --- | --- |
-| Class, interface, type, enum | `UpperCamelCase` | `ArticlePage`, `ArticlePayload` |
-| Method, function, variable, property | `lowerCamelCase` | `createArticle`, `authToken` |
-| Module-level constant | `CONSTANT_CASE` | `DEFAULT_TIMEOUT_MS` |
-| File — page object | `kebab-case.page.ts` | `article-editor.page.ts` |
-| File — test spec | `kebab-case.spec.ts` | `article-lifecycle.spec.ts` |
-| File — factory / fixture / schema | `kebab-case.{factory,fixture,schema}.ts` | `user.factory.ts` |
+| Construct                            | Case                                     | Example                         |
+| ------------------------------------ | ---------------------------------------- | ------------------------------- |
+| Class, interface, type, enum         | `UpperCamelCase`                         | `ArticlePage`, `ArticlePayload` |
+| Method, function, variable, property | `lowerCamelCase`                         | `createArticle`, `authToken`    |
+| Module-level constant                | `CONSTANT_CASE`                          | `DEFAULT_TIMEOUT_MS`            |
+| File — page object                   | `kebab-case.page.ts`                     | `article-editor.page.ts`        |
+| File — test spec                     | `kebab-case.spec.ts`                     | `article-lifecycle.spec.ts`     |
+| File — factory / fixture / schema    | `kebab-case.{factory,fixture,schema}.ts` | `user.factory.ts`               |
 
 Interfaces are **not** prefixed with `I`. Private members use the `private` keyword, not
 a leading underscore. Both are explicit prohibitions in the Google guide and both are
@@ -86,13 +106,13 @@ shared across every test in the run, so absolute counts are inherently racy:
 In strict order of preference. Reach for a lower row only when every row above is
 genuinely inapplicable.
 
-| Preference | Mechanism | Use for |
-| --- | --- | --- |
-| 1 | Auto-retrying `expect(locator)` | Anything observable in the DOM |
-| 2 | `expect.poll(fn)` | Non-locator values, e.g. an API read-back |
-| 3 | `expect(fn).toPass()` | A block of assertions that should eventually hold |
-| 4 | `waitForResponse` / `waitForURL` | A specific network or navigation event |
-| ✗ | `waitForTimeout`, `setTimeout`, `while` loops | Never. Lint error. |
+| Preference | Mechanism                                     | Use for                                           |
+| ---------- | --------------------------------------------- | ------------------------------------------------- |
+| 1          | Auto-retrying `expect(locator)`               | Anything observable in the DOM                    |
+| 2          | `expect.poll(fn)`                             | Non-locator values, e.g. an API read-back         |
+| 3          | `expect(fn).toPass()`                         | A block of assertions that should eventually hold |
+| 4          | `waitForResponse` / `waitForURL`              | A specific network or navigation event            |
+| ✗          | `waitForTimeout`, `setTimeout`, `while` loops | Never. Lint error.                                |
 
 There is no legitimate use of a fixed sleep in this repository. If one appears to be
 needed, the real problem is a missing observable signal — find it, or add a

@@ -3,6 +3,7 @@
 const js = require('@eslint/js');
 const tseslint = require('typescript-eslint');
 const playwright = require('eslint-plugin-playwright');
+const prettier = require('eslint-config-prettier');
 
 const guardrails = require('./eslint-rules');
 
@@ -98,5 +99,12 @@ module.exports = tseslint.config(
         setTimeout: 'readonly',
       },
     },
-  }
+  },
+
+  /**
+   * Last, so it wins: turns off every ESLint rule that overlaps with Prettier.
+   * Formatting is Prettier's job and correctness is ESLint's, and a repository where the
+   * two disagree teaches contributors to ignore both.
+   */
+  prettier
 );

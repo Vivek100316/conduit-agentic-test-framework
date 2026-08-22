@@ -109,7 +109,9 @@ function main(): void {
     if (bucket === undefined) {
       continue;
     }
-    console.log(`  ${priority.padEnd(10)} ${String(bucket.done).padStart(11)} / ${bucket.designed}`);
+    console.log(
+      `  ${priority.padEnd(10)} ${String(bucket.done).padStart(11)} / ${bucket.designed}`
+    );
   }
 
   const doneTotal = designed.filter((scenario) => implemented.has(scenario.id)).length;
@@ -117,7 +119,7 @@ function main(): void {
 
   const pending = designed.filter((scenario) => !implemented.has(scenario.id));
   if (pending.length > 0) {
-    console.log('Designed but not implemented (see each design\'s rationale):');
+    console.log("Designed but not implemented (see each design's rationale):");
     for (const scenario of pending) {
       console.log(`  ${scenario.id.padEnd(14)} ${scenario.title}`);
     }

@@ -41,7 +41,9 @@ function write(path: string, contents: string): void {
 }
 
 function testTemplate(project: string, name: string): string {
-  const describe = toPascalCase(name).replace(/([A-Z])/g, ' $1').trim();
+  const describe = toPascalCase(name)
+    .replace(/([A-Z])/g, ' $1')
+    .trim();
   const isUi = project === 'ui';
 
   const body = isUi
@@ -144,10 +146,7 @@ function main(): void {
       process.exitCode = 1;
       return;
     }
-    write(
-      join(REPO_ROOT, 'src', 'pages', `${toKebabCase(name)}.page.ts`),
-      pageTemplate(name)
-    );
+    write(join(REPO_ROOT, 'src', 'pages', `${toKebabCase(name)}.page.ts`), pageTemplate(name));
     console.log('\nNext: verify each locator against the running app before trusting it.');
     return;
   }

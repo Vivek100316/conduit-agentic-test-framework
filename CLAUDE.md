@@ -80,14 +80,14 @@ Full strategy: [docs/TEST_DATA.md](docs/TEST_DATA.md).
 
 ## Skills and subagents
 
-| Name | Use for |
-| --- | --- |
-| `add-api-test` | Covering an endpoint |
-| `add-ui-test` | Covering a screen or journey |
-| `design-scenarios` | Planning coverage for a feature |
-| `triage-failure` | A red test — **before** changing anything |
-| `selector-scout` | Verified locators for an unmodelled screen |
-| `test-reviewer` | Reviewing a test before a pull request |
+| Name               | Use for                                    |
+| ------------------ | ------------------------------------------ |
+| `add-api-test`     | Covering an endpoint                       |
+| `add-ui-test`      | Covering a screen or journey               |
+| `design-scenarios` | Planning coverage for a feature            |
+| `triage-failure`   | A red test — **before** changing anything  |
+| `selector-scout`   | Verified locators for an unmodelled screen |
+| `test-reviewer`    | Reviewing a test before a pull request     |
 
 A `PostToolUse` hook lints every TypeScript file the moment it is written, so a banned
 locator or raw HTTP call comes back within the same train of thought rather than at commit

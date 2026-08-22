@@ -39,7 +39,7 @@ registration, or `201` on create, means the test was written from
 `realworld/api/swagger.json` rather than from the running app. This app returns `200` and
 `404 text/html` respectively.
 
-Equally: if a test asserts something that *contradicts* a documented deviation, ask whether
+Equally: if a test asserts something that _contradicts_ a documented deviation, ask whether
 the app changed. That is a finding worth surfacing, not a test to fix.
 
 ### Is it isolated?

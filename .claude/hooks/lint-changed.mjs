@@ -51,26 +51,45 @@ if (!WATCHED_DIRS.test(`/${relative}`) || !existsSync(filePath)) {
   process.exit(0);
 }
 
-const result = spawnSync('npx', ['eslint', filePath], {
-  cwd: REPO_ROOT,
-  encoding: 'utf8',
-  timeout: 60_000,
-});
+function run(command, args) {
+  return spawnSync(command, args, { cwd: REPO_ROOT, encoding: 'utf8', timeout: 60_000 });
+}
 
-if (result.status === 0 || result.error) {
+const lint = run('npx', ['eslint', filePath]);
+const format = run('npx', ['prettier', '--check', filePath]);
+
+// A crashed tool must never block work — only a real violation should.
+const lintFailed = !lint.error && lint.status !== 0;
+const formatFailed = !format.error && format.status !== 0;
+
+if (!lintFailed && !formatFailed) {
   process.exit(0);
 }
 
-const output = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
-if (output.length === 0) {
+const problems = [];
+
+if (lintFailed) {
+  const output = `${lint.stdout ?? ''}${lint.stderr ?? ''}`.trim();
+  if (output.length > 0) {
+    problems.push(
+      `Guardrails rejected ${relative}:\n\n${output}\n\n` +
+        `The two that come up most:\n` +
+        `  - Locators belong in src/pages/, never in a test.\n` +
+        `  - HTTP belongs in src/api/, never in a test.`
+    );
+  }
+}
+
+if (formatFailed) {
+  problems.push(
+    `${relative} is not formatted. Run:\n\n  npx prettier --write ${relative}\n\n` +
+      `Formatting is Prettier's job, not something to hand-fix — \`npm run verify\` checks it.`
+  );
+}
+
+if (problems.length === 0) {
   process.exit(0);
 }
 
-process.stderr.write(
-  `Guardrails rejected ${relative}:\n\n${output}\n\n` +
-    `Fix these before continuing. The two that come up most:\n` +
-    `  - Locators belong in src/pages/, never in a test.\n` +
-    `  - HTTP belongs in src/api/, never in a test.\n` +
-    `See docs/ENGINEERING_STANDARDS.md.\n`
-);
+process.stderr.write(`${problems.join('\n\n')}\n\nSee docs/ENGINEERING_STANDARDS.md.\n`);
 process.exit(2);

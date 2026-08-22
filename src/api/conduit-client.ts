@@ -99,11 +99,7 @@ export class ConduitClient {
     });
   }
 
-  async updateArticle(
-    token: string,
-    slug: string,
-    patch: Partial<ArticleInput>
-  ): Promise<Article> {
+  async updateArticle(token: string, slug: string, patch: Partial<ArticleInput>): Promise<Article> {
     const response = await this.updateArticleRaw(token, slug, patch);
     return (await parse(response, articleResponseSchema, `PUT /articles/${slug}`)).article;
   }

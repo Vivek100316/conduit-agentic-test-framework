@@ -4,20 +4,20 @@ Generated against the running app on 2026-08-22. Every row cites the route handl
 component, or observed response it derives from; a scenario without evidence was invented
 and does not belong here.
 
-| ID | Scenario | Priority | Layer | Evidence |
-| --- | --- | --- | --- | --- |
-| AUTH-P0-01 | A registered user's token authenticates and their credentials log in | P0 | API | `routes/api/users.js:46,72` |
-| AUTH-P0-02 | A protected route rejects a request with no token | P0 | API | `auth.required` — `routes/auth.js:16` |
-| AUTH-P0-03 | A protected route rejects a malformed or forged token | P0 | API | `express-jwt` verification — `routes/auth.js:16` |
-| AUTH-P1-01 | A duplicate email is rejected | P1 | API | `routes/api/users.js:78` — deviation, returns `404 text/html` |
-| AUTH-P1-02 | A duplicate username is rejected | P1 | API | Unique constraint — `models/user.js` |
-| AUTH-P1-03 | Login with a wrong password is refused | P1 | API | `passport.authenticate` failure — `routes/api/users.js:57` |
-| AUTH-P1-04 | Blank email or password is refused before authentication is attempted | P1 | API | Explicit guards — `routes/api/users.js:48,51` |
-| AUTH-P2-01 | The token encodes the expected subject and expiry | P2 | API | `generateJWT` — `models/user.js` |
-| UI-P0-01 | Signing in through the form establishes a session that survives a reload | P0 | UI | `src/middleware.js:52`, `src/components/App.js:43` |
-| UI-P1-01 | Invalid credentials surface a visible error and do not authenticate | P1 | UI | `src/components/ListErrors.js` |
-| UI-P1-02 | Signing out clears the session and restores the anonymous navigation | P1 | UI | `src/components/Header.js` |
-| UI-P2-01 | Visiting a protected route while anonymous does not expose authored content | P2 | UI | `src/components/App.js:43` |
+| ID         | Scenario                                                                    | Priority | Layer | Evidence                                                      |
+| ---------- | --------------------------------------------------------------------------- | -------- | ----- | ------------------------------------------------------------- |
+| AUTH-P0-01 | A registered user's token authenticates and their credentials log in        | P0       | API   | `routes/api/users.js:46,72`                                   |
+| AUTH-P0-02 | A protected route rejects a request with no token                           | P0       | API   | `auth.required` — `routes/auth.js:16`                         |
+| AUTH-P0-03 | A protected route rejects a malformed or forged token                       | P0       | API   | `express-jwt` verification — `routes/auth.js:16`              |
+| AUTH-P1-01 | A duplicate email is rejected                                               | P1       | API   | `routes/api/users.js:78` — deviation, returns `404 text/html` |
+| AUTH-P1-02 | A duplicate username is rejected                                            | P1       | API   | Unique constraint — `models/user.js`                          |
+| AUTH-P1-03 | Login with a wrong password is refused                                      | P1       | API   | `passport.authenticate` failure — `routes/api/users.js:57`    |
+| AUTH-P1-04 | Blank email or password is refused before authentication is attempted       | P1       | API   | Explicit guards — `routes/api/users.js:48,51`                 |
+| AUTH-P2-01 | The token encodes the expected subject and expiry                           | P2       | API   | `generateJWT` — `models/user.js`                              |
+| UI-P0-01   | Signing in through the form establishes a session that survives a reload    | P0       | UI    | `src/middleware.js:52`, `src/components/App.js:43`            |
+| UI-P1-01   | Invalid credentials surface a visible error and do not authenticate         | P1       | UI    | `src/components/ListErrors.js`                                |
+| UI-P1-02   | Signing out clears the session and restores the anonymous navigation        | P1       | UI    | `src/components/Header.js`                                    |
+| UI-P2-01   | Visiting a protected route while anonymous does not expose authored content | P2       | UI    | `src/components/App.js:43`                                    |
 
 ## Observed deviations
 
