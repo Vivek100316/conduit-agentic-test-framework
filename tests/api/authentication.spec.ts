@@ -41,7 +41,12 @@ test.describe('Authentication', () => {
      * the app is fixed to return 422, this test fails loudly and points straight here,
      * which is the intended signal — not a regression.
      */
-    expect(response.status()).toBe(404);
+    expect(
+      response.status(),
+      'duplicate email returned the known DEFECT status. If this is now 422, the app was ' +
+        'fixed — update this assertion and docs/DEVIATIONS.md rather than treating it as ' +
+        'a regression.'
+    ).toBe(404);
     expect(response.headers()['content-type']).toContain('text/html');
   });
 });
