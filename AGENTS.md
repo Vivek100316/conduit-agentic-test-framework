@@ -75,6 +75,11 @@ documentation the change invalidates in the same commit.
 | `selector-scout`   | Verified locators for an unmodelled screen |
 | `test-reviewer`    | Reviewing a test before a pull request     |
 
+The first four are **skills** — you follow them yourself, keeping full context. The last two
+are **subagents**: separate context, restricted tools, their own model. Both are read-only
+by tool list, so "reports, never edits" is enforced rather than promised. Reasoning in the
+README.
+
 ## Reference
 
 - [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md) — naming, assertions,

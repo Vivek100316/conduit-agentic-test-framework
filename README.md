@@ -1,15 +1,17 @@
 # Conduit Agentic Test Framework
 
 Playwright + TypeScript tests for the [Conduit](https://github.com/cirosantilli/node-express-sequelize-realworld-example-app)
-RealWorld app, designed so that an AI coding agent contributing a test produces a
-correct one. Guardrails over guidelines.
+RealWorld app.
+
+The framework is built so that an AI coding agent writing a test here produces a **correct**
+one. Not by asking it to read the rules, but by making the wrong thing fail immediately.
+Guardrails over guidelines.
 
 ## Quick start
 
-The framework needs the app under test running on `localhost`. That app is a 2021
-codebase with four separate problems on a modern machine — **read
-[docs/APP_SETUP.md](docs/APP_SETUP.md) before your first run**; `npm install && npm start`
-in that repo does not work.
+You need the app under test running first. That app is from 2021 and does not build on a
+modern machine without four fixes — **read [docs/APP_SETUP.md](docs/APP_SETUP.md) before
+your first run.** `npm install && npm start` in that repo does not work.
 
 Once the app is up:
 
@@ -20,81 +22,196 @@ npm run app:health
 npm run verify
 ```
 
-`npm run app:health` confirms both the API (`:3000`) and UI (`:4101`) are reachable and
-prints the exact command to start whichever one is not.
+`npm run app:health` checks that both the API (`:3000`) and the UI (`:4101`) answer. If one
+is down, it prints the exact command to start it.
 
 ## Commands
 
-| Command                                | What it does                                                                                         |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `npm run verify`                       | Typecheck, lint, scenario coverage, both suites. **The definition of done — run before every push.** |
-| `npm run test:api`                     | API suite only. Sub-second; this is the inner loop.                                                  |
-| `npm run test:ui`                      | UI suite only.                                                                                       |
-| `npm test`                             | Everything.                                                                                          |
-| `npm run lint`                         | Guardrails and style.                                                                                |
-| `npm run app:health`                   | Is the app under test running?                                                                       |
-| `npm run scenarios:coverage`           | Designed scenarios vs. implemented ones.                                                             |
-| `npm run new:test -- <api\|ui> <name>` | Scaffold a spec that is green before you edit it.                                                    |
-| `npm run new:page -- <Name>`           | Scaffold a page object.                                                                              |
+| Command                                | What it does                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------------ |
+| `npm run verify`                       | Types, lint, format, coverage, and both test suites. **Run this before every push.** |
+| `npm run test:api`                     | API tests only. Under a second — this is the fast loop while writing.                |
+| `npm run test:ui`                      | UI tests only.                                                                       |
+| `npm test`                             | Everything.                                                                          |
+| `npm run lint`                         | Guardrails and code style.                                                           |
+| `npm run app:health`                   | Is the app under test running?                                                       |
+| `npm run scenarios:coverage`           | How many designed scenarios are actually implemented.                                |
+| `npm run new:test -- <api\|ui> <name>` | Create a new test file that already passes `verify`.                                 |
+| `npm run new:page -- <Name>`           | Create a new page object.                                                            |
+
+## How it all fits together
+
+Read this top to bottom. Each box only talks to the box below it.
+
+```
+                    ┌────────────────────────────────────┐
+                    │  Contributor — a person or an AI   │
+                    └─────────────────┬──────────────────┘
+                                      │ writes or edits a file
+                                      ▼
+                    ┌────────────────────────────────────┐
+                    │  Hook: .claude/hooks/lint-changed  │
+                    │  Runs on every SAVE, not at commit │
+                    │  ESLint + Prettier on that file    │
+                    │  A problem is sent straight back   │
+                    └─────────────────┬──────────────────┘
+                                      │ file is clean
+                                      ▼
+                    ┌────────────────────────────────────┐
+                    │  npm run verify  — the gate        │
+                    │  types · lint · format · coverage  │
+                    │  then runs the tests               │
+                    └─────────────────┬──────────────────┘
+                                      ▼
+                    ┌────────────────────────────────────┐
+                    │  Playwright runner                 │
+                    │  project "api"   ·   project "ui"  │
+                    └─────────────────┬──────────────────┘
+                                      ▼
+                    ┌────────────────────────────────────┐
+                    │  src/fixtures/   (test.extend)     │
+                    │  Gives each test only what it asks │
+                    │  for: api client, users, article,  │
+                    │  a signed-in page                  │
+                    └────────┬──────────────────┬────────┘
+                             │                  │
+                UI tests use │                  │ API tests use
+                             ▼                  ▼
+              ┌──────────────────────┐  ┌──────────────────────┐
+              │     src/pages/       │  │      src/api/        │
+              │  Page objects.       │  │  ConduitClient.      │
+              │  The ONLY place a    │  │  The ONLY place we   │
+              │  locator may live.   │  │  send HTTP. Every    │
+              │                      │  │  reply is checked    │
+              │                      │  │  against a schema.   │
+              └──────────┬───────────┘  └──────────┬───────────┘
+                         │                         │
+                         │  ┌──────────────────────┴───┐
+                         │  │ src/factories/ + config/ │
+                         │  │ unique test data, URLs   │
+                         │  │ used by BOTH sides       │
+                         │  └───────────┬──────────────┘
+                         │              │
+              ═══════════╪══ network ═══╪═══════════════
+                         ▼              ▼
+              ┌────────────────────────────────────────┐
+              │   Conduit app under test               │
+              │   UI :4101    ·    API :3000/api       │
+              │   Node 16 · never modified by us       │
+              └────────────────────────────────────────┘
+```
+
+**Why it is shaped like this.** There are only two doors into the app: page objects for the
+browser, and `ConduitClient` for HTTP. Everything else has to go through one of them. Two
+custom ESLint rules make that a build failure rather than a house rule, so a test file
+simply cannot contain a locator or an HTTP call.
+
+That matters because both doors are where the app's surprises live. The DOM has no test
+IDs and no labels, so a selector has to be checked against the running page. The API
+disagrees with its own published spec in nine places, so a response shape has to be checked
+against a real reply. Keeping both behind one door each means those checks happen once, in
+a file someone reviewed — not guessed at in every new test.
 
 ## What "agentic-first" means here
 
 An AI agent writing a test for this app has read a thousand RealWorld tutorials and zero
-lines of _this_ fork. It produces code that is idiomatic, confident, and wrong in
-predictable ways. Every design choice below closes one of those specific failure modes
-structurally, rather than asking a contributor to remember something.
+lines of _this_ version of it. So it writes code that looks right, is standard practice,
+and is wrong here in ways you can predict. Every rule below blocks one of those specific
+mistakes.
 
-| What an agent does                                                                  | What stops it                                                                               |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `getByLabel('Password')` — no labels exist in this app                              | Locators are a lint error outside `src/pages/`                                              |
-| `getByRole('textbox')` unqualified — 2 matches on the login form                    | Same rule; the page object holds a selector verified against the real DOM                   |
-| `.locator('.form-control')` — 2 matches on login, 4 in the editor                   | Same rule                                                                                   |
-| `expect(status).toBe(422)` on duplicate registration, because the spec says so      | Raw HTTP is a lint error outside `src/api/`; the client's schemas encode observed behaviour |
-| `expect(created.tagList).toEqual(sentTags)` — the create response never echoes tags | Client method documents it; `ART-P1-01` pins the real behaviour                             |
-| `await page.waitForTimeout(1000)`                                                   | Lint error                                                                                  |
-| `expect(await x.isVisible()).toBe(true)` — evaluates once, never retries            | Lint error (`prefer-web-first-assertions`)                                                  |
-| Assumes `bio` is a `string`                                                         | Runtime schema validation fails at the call site, naming the route                          |
+| What an agent writes                                                               | What stops it                                                                     |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `getByLabel('Password')` — this app has no labels at all                           | Locators are a lint error outside `src/pages/`                                    |
+| `getByRole('textbox')` on its own — matches 2 things on the login form             | Same rule. The page object holds a selector that was counted against the real DOM |
+| `.locator('.form-control')` — 2 matches on login, 4 in the editor                  | Same rule                                                                         |
+| `expect(status).toBe(422)` for a duplicate signup, because the spec says so        | HTTP is a lint error outside `src/api/`, where schemas record what really happens |
+| `expect(created.tagList).toEqual(sentTags)` — the create reply never includes tags | The client method says so in a comment; `ART-P0-01` pins the real behaviour       |
+| `await page.waitForTimeout(1000)`                                                  | Lint error                                                                        |
+| `expect(await x.isVisible()).toBe(true)` — checks once and never retries           | Lint error (`prefer-web-first-assertions`)                                        |
+| Assumes `bio` is always a string                                                   | The schema fails at the call site and names the endpoint                          |
 
-These are not hypothetical. Running the guardrails against a file containing all of them
-produces six errors, each naming the fix.
+These are not guesses. Running the guardrails over a file containing all of them produces
+six errors, and each one names the fix.
 
-## Structure
+## Skills and subagents — why some are one and some the other
+
+`.claude/` holds two kinds of thing, and the difference is not cosmetic.
+
+**Skills** (`.claude/skills/`) are instructions the main agent follows **itself**. They load
+into the current conversation, so the agent keeps everything it already knows — what you
+asked for, which files it just read, what it decided five minutes ago. A skill is a
+checklist that changes how the agent works.
+
+**Subagents** (`.claude/agents/`) are a **separate** agent with its own fresh context, its
+own tool list, and its own model. It starts cold, does one job, and returns a report. The
+main agent never sees its working-out — only the answer.
+
+The choice comes down to three questions:
+
+| Ask                                                  | If yes   | Why                                                           |
+| ---------------------------------------------------- | -------- | ------------------------------------------------------------- |
+| Does it need to be **unable** to edit files?         | subagent | Only a subagent can be given a restricted tool list           |
+| Is a **fresh, independent** view better?             | subagent | A separate context can't be swayed by the conversation so far |
+| Does it produce lots of **noisy intermediate work**? | subagent | That noise stays out of the main conversation                 |
+| Otherwise                                            | skill    | The agent does the work itself and keeps full context         |
+
+So:
+
+- **`add-api-test` and `add-ui-test` are skills** because the main agent is the one writing
+  the test. It needs the full conversation to know what to build, and it needs to actually
+  create the file. Handing this to a subagent would return a file whose reasoning nobody
+  saw.
+- **`test-reviewer` is a subagent** for two reasons. Independence: a reviewer that did not
+  write the code, and cannot see the conversation that produced it, is a better reviewer.
+  And enforcement: its tool list is `Bash, Read, Grep, Glob` — no `Edit`, no `Write`. "It
+  reports, it does not fix" is a property of the setup, not a promise in a document.
+- **`selector-scout` is a subagent** because it generates a lot of noise — page trees,
+  match counts, rejected candidates — and only the verified result matters. It is also
+  read-only for the same structural reason, and runs on a cheaper model because counting
+  matches is mechanical work.
+- **`triage-failure` and `design-scenarios` are skills** because the main agent has to act
+  on what it finds. `design-scenarios` is the closest call: it explores like the scout
+  does, but it writes a file the agent then works from, so keeping it in context avoids
+  reading that file back in.
+
+## Repository layout
 
 ```
-src/api/         Typed client + runtime schemas — the only place HTTP is spoken
+src/api/         Typed client + schemas — the only place HTTP is sent
 src/pages/       Page objects — the only place locators may appear
-src/factories/   Unique-per-test data builders
-src/fixtures/    Playwright fixtures composed with test.extend
+src/factories/   Builders that make unique data for each test
+src/fixtures/    Playwright fixtures, composed with test.extend
 src/config/      Environment loading and validation
-tests/api/       API specs
-tests/ui/        UI specs
-tools/           Health check, scaffolding, scenario coverage
-eslint-rules/    Custom guardrail rules
-.claude/         Skills, subagents, and the lint-on-edit hook
+tests/api/       API tests
+tests/ui/        UI tests
+tools/           Health check, file generators, coverage report
+eslint-rules/    The two custom guardrail rules
+.claude/         Skills, subagents, and the save-time hook
 docs/            Standards, data strategy, deviations, scenario designs
 ```
 
 ## The agentic infrastructure
 
-Eight artifacts, each closing a failure mode named above rather than added for
-completeness.
+Eight pieces. Each one blocks a specific mistake listed above — nothing was added just to
+round out the set.
 
-| Artifact                          | Closes                                                 |
-| --------------------------------- | ------------------------------------------------------ |
-| `eslint-rules/` (2 custom rules)  | Hallucinated selectors and one-off HTTP calls          |
-| `.claude/hooks/lint-changed.mjs`  | Delay between writing a violation and hearing about it |
-| `.claude/skills/add-api-test`     | Asserting the spec instead of the app                  |
-| `.claude/skills/add-ui-test`      | Guessing selectors on an app with no test ids          |
-| `.claude/skills/design-scenarios` | Coverage chosen by convenience rather than priority    |
-| `.claude/skills/triage-failure`   | "Fixing" a test that was correctly reporting a bug     |
-| `.claude/agents/selector-scout`   | Selectors derived from memory rather than the DOM      |
-| `npm run new:test` / `new:page`   | Conventions that must be read to be followed           |
+| Piece                             | Mistake it blocks                                           |
+| --------------------------------- | ----------------------------------------------------------- |
+| `eslint-rules/` (2 custom rules)  | Invented selectors and one-off HTTP calls                   |
+| `.claude/hooks/lint-changed.mjs`  | The delay between writing a mistake and hearing about it    |
+| `.claude/skills/add-api-test`     | Testing what the spec says instead of what the app does     |
+| `.claude/skills/add-ui-test`      | Guessing selectors on an app that has no test IDs           |
+| `.claude/skills/design-scenarios` | Testing whatever is easy instead of whatever matters        |
+| `.claude/skills/triage-failure`   | "Fixing" a test that was correctly reporting a real bug     |
+| `.claude/agents/selector-scout`   | Selectors written from memory instead of from the live page |
+| `npm run new:test` / `new:page`   | Conventions you have to read a document to follow           |
 
-The hook is the piece worth trying: edit a spec, put a locator in it, and the violation
-comes back before you have moved on. Guardrails only ever say _no_ — the generators are the
-half that says _yes, here_, and a generated file passes `verify` before a line is changed.
+The hook is the piece worth trying yourself: open a test file, put a locator in it, save,
+and the complaint arrives before you have moved on. Rules only ever say _no_ — the
+generators are the half that says _yes, like this_, and a generated file passes `verify`
+before you change a line of it.
 
-Coverage is a computed number, not a claim:
+Coverage is a number the tools work out, not a claim:
 
 ```
 $ npm run scenarios:coverage
@@ -105,50 +222,83 @@ $ npm run scenarios:coverage
   TOTAL                6 / 30
 ```
 
-Unimplemented scenarios never fail the build; an orphaned ID — one a test claims but no
-design defines — always does. See [D-004](DECISIONS.md).
+A scenario that is designed but not implemented never fails the build. An **orphan** — a
+test claiming an ID that no design defines — always does. See [D-004](DECISIONS.md) for why
+that asymmetry is deliberate.
 
-Conventions live in [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md);
-architecture decisions and their rejected alternatives in [DECISIONS.md](DECISIONS.md);
-how AI was used to build this, including what it got wrong, in [AI_USAGE.md](AI_USAGE.md).
+## How test data flows
 
-Where the app disagrees with the RealWorld spec — and it does, in nine catalogued ways —
-see [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md). Every entry names the route file and
-line responsible. Notably, error responses are not JSON (`403` is `text/plain`, `401` is
-`text/html`), and `POST /articles` never returns the tags you sent it.
+```
+  ┌──────────────────────┐     ┌──────────────────────────┐
+  │   src/factories/     │ ──► │  A user and article that │
+  │   buildUser()        │     │  belong to ONE test only │
+  │   buildArticle()     │     │  (unique name + email)   │
+  └──────────────────────┘     └────────────┬─────────────┘
+                                            │ created over the API
+                                            ▼
+                               ┌──────────────────────────┐
+                               │  Tests run in parallel   │
+                               │  No database reset       │
+                               │  No cleanup afterwards   │
+                               └────────────┬─────────────┘
+                                            ▼
+                               ┌──────────────────────────┐
+                               │  Assertions are relative │
+                               │  "my article is there",  │
+                               │  never "there are 3"     │
+                               └──────────────────────────┘
+```
 
-## Scope of coverage
+Every test makes its own data, so two tests can never collide and there is nothing to clean
+up afterwards. That is what lets the suite run fully parallel.
+
+The one weak spot is genuinely shared state: Conduit's tag list and Global Feed belong to
+every test at once. So the standards ban counting them and require relative checks instead —
+a hard count would be a race by design. Full reasoning in
+[docs/TEST_DATA.md](docs/TEST_DATA.md).
+
+## What is covered
 
 Six tests: four API, two UI.
 
 | Test          | Covers                                                          |
 | ------------- | --------------------------------------------------------------- |
-| `AUTH-P0-01`  | Registration, token authenticates, credentials log in           |
-| `AUTH-P1-01`  | Duplicate email rejected — a documented `404` deviation         |
-| `ART-P0-01`   | Article published and read back — the `tagList` deviation       |
-| `AUTHZ-P0-01` | Non-author cannot edit, and the article is genuinely unchanged  |
-| `UI-P0-01`    | Signing in through the form, and the session surviving a reload |
-| `UI-P0-02`    | Publishing from the editor and the article rendering            |
+| `AUTH-P0-01`  | Signing up, the token working, and logging in                   |
+| `AUTH-P1-01`  | Duplicate email refused — a recorded `404` deviation            |
+| `ART-P0-01`   | Publishing an article and reading it back — `tagList` deviation |
+| `AUTHZ-P0-01` | A non-author cannot edit, and the article really is unchanged   |
+| `UI-P0-01`    | Signing in on the form, and the session surviving a reload      |
+| `UI-P0-02`    | Publishing in the editor and the article appearing              |
 
-Signing in through the form is proved once, by `UI-P0-01`. Every other UI test injects the
-session directly, because re-proving login on the way to testing something else only buys
-extra ways to fail.
+Signing in through the form is proved once, in `UI-P0-01`. Every other UI test injects the
+session directly, because proving login again on the way to testing something else only adds
+ways to fail.
 
-`ConduitClient` deliberately covers much more than the tests exercise — favourites,
-comments, follows, tags, delete. That gap is a decision, not unfinished work: the brief
-puts full coverage out of scope and asks for depth over breadth, while a client that
-already speaks the whole API is what makes adding a scenario a test-only change. Every
-method was verified against live responses when written, and what that reconnaissance
-turned up is in [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md). See
-[D-004](DECISIONS.md).
+`ConduitClient` covers far more than these tests use — favourites, comments, follows, tags,
+delete. That gap is a decision, not unfinished work. The brief asks for depth over breadth
+and puts full coverage out of scope, and a client that already speaks the whole API is what
+makes adding a test a test-only change. Every method was checked against a real response
+when it was written, and what that turned up is in
+[docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md).
 
-## Test isolation
+## Reviewing this repo in 30 minutes
 
-Every test builds its own user and its own data through a factory. There is no shared
-account, no database reset, and no teardown — isolation comes from uniqueness, which is
-parallel-safe and cannot fail halfway and leave the next test worse off.
+If you only have half an hour, this order tells the whole story:
 
-The one place this strains is genuinely global state: Conduit's tag sidebar and Global
-Feed are shared across every test in a run. The standards therefore ban absolute-count
-assertions on them in favour of relative ones ("my article is present"), because a hard
-count is racy by construction.
+1. **This README** — the shape of the thing
+2. **[DECISIONS.md](DECISIONS.md)** — five decisions, what was rejected, and what would
+   change each one
+3. **[AI_USAGE.md](AI_USAGE.md)** — how AI was used, and the three times it was wrong
+4. **[tests/api/articles.spec.ts](tests/api/articles.spec.ts)** — a test asserting what the
+   app really does, not what its spec claims
+5. **[eslint-rules/no-locators-outside-page-objects.js](eslint-rules/no-locators-outside-page-objects.js)** —
+   a guardrail, with the reason it exists in the comment
+6. **`npm run verify`** — see it green
+
+That path runs idea → judgement → evidence → enforcement → proof.
+
+Conventions are in [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md). Where the
+app disagrees with the RealWorld spec — nine recorded places — see
+[docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md); every entry names the file and line in the
+app that causes it. Notably, error responses are not JSON (`403` is `text/plain`, `401` is
+`text/html`), and `POST /articles` never returns the tags you sent it.
