@@ -74,7 +74,7 @@ export class ConduitClient {
   /**
    * Note: the returned article's `tagList` is always empty, even when tags were sent.
    * That is the app's behaviour, not a bug in this client — read the article back to
-   * see its tags. See docs/API_DEVIATIONS.md.
+   * see its tags. See docs/DEVIATIONS.md.
    */
   async createArticle(token: string, input: ArticleInput): Promise<Article> {
     const response = await this.createArticleRaw(token, input);

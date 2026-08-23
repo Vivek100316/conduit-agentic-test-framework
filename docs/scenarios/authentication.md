@@ -24,7 +24,7 @@ and does not belong here.
 `POST /users` returns `200` where the spec says `201`, and a duplicate email returns `404`
 with a `text/html` body rather than `422 JSON` — the catch in `routes/api/users.js:78`
 calls `next()` with no argument, so the request falls through to the generic 404 handler.
-Full catalogue in [API_DEVIATIONS.md](../API_DEVIATIONS.md).
+Full catalogue in [DEVIATIONS.md](../DEVIATIONS.md).
 
 `bio` and `image` are `""` from register and `null` from login. Any assertion on those
 fields has to accept both.

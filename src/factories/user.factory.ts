@@ -8,7 +8,7 @@ import { unique } from './unique';
  *
  * Nothing here is random beyond the uniqueness token. A test that needs to assert on a
  * value passes it in as an override, so no assertion ever depends on generated content.
- * See docs/TEST_DATA.md.
+ * See docs/ENGINEERING_STANDARDS.md.
  */
 export function buildUser(overrides: Partial<RegisterInput> = {}): RegisterInput {
   const id = unique();

@@ -45,7 +45,7 @@ The most common defect in a passing suite is a test that cannot fail.
 ### Is it asserting the app or the spec?
 
 Check every status code and shape against
-[API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md). An assertion of `422` on duplicate
+[DEVIATIONS.md](../../docs/DEVIATIONS.md). An assertion of `422` on duplicate
 registration, or `201` on create, means the test was written from
 `realworld/api/swagger.json` rather than from the running app. This app returns `200` and
 `404 text/html` respectively.
@@ -54,7 +54,7 @@ Equally: if a test asserts something that _contradicts_ a documented deviation, 
 the app changed. That is a finding worth surfacing, not a test to fix.
 
 **A deviation asserted without being labelled is a finding of its own.** Following
-[DEVIATION_POLICY.md](../../../docs/DEVIATION_POLICY.md), a test pinning behaviour that
+[DEVIATIONS.md](../../docs/DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree), a test pinning behaviour that
 contradicts the spec must say at the assertion which it is — defect, stale spec, or
 deliberate difference — so that a future fix to the app fails loudly and points at why. An
 unannotated `expect(status).toBe(404)` where the spec says `422` silently promotes a bug to
@@ -67,7 +67,7 @@ expected behaviour. Flag it.
   in the run. Relative assertions only.
 - No hooks deleting the **data** a test created — cleanup that fails halfway is worse than
   none. This does not apply to **resources**: anything holding a socket or handle must
-  still be released in the fixture that opened it. See `docs/TEST_DATA.md`.
+  still be released in the fixture that opened it. See `docs/ENGINEERING_STANDARDS.md`.
 - No dependence on another test having run first.
 
 ### Is it at the right layer?

@@ -71,12 +71,12 @@ wrong here about status codes, error bodies, and field nullability.
 So use both, for different purposes. The spec tells you a duplicate email ought to be
 rejected — that scenario belongs in the design regardless. The running app tells you it is
 rejected with `404 text/html` rather than `422 JSON` — that goes under **Observed
-deviations**, into [API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md), and gets
+deviations**, into [DEVIATIONS.md](../../../docs/DEVIATIONS.md), and gets
 **reported to the user**, classified as a likely defect, stale spec, or deliberate
 difference.
 
 Do not decide which of the two is correct. That is a human call —
-[DEVIATION_POLICY.md](../../../docs/DEVIATION_POLICY.md).
+[DEVIATIONS.md](../../../docs/DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree).
 
 ### 4. Assign priority by consequence, not difficulty
 
