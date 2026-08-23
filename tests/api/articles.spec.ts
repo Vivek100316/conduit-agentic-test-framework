@@ -28,7 +28,12 @@ test.describe('Articles', () => {
      * spec implies and what this app never does. Asserting `[]` pins current behaviour;
      * when the promise chain is fixed this test fails and names the change.
      */
-    expect(created.tagList).toEqual([]);
+    expect(
+      created.tagList,
+      'create response omitted tags (known DEFECT). If this now RETURNS tags, the app was ' +
+        'fixed — update this assertion and the row in docs/DEVIATIONS.md rather than ' +
+        'treating it as a regression.'
+    ).toEqual([]);
 
     const fetched = await api.getArticle(created.slug);
     expect(fetched.title).toBe(input.title);
