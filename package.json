@@ -18,8 +18,10 @@
     "new:test": "tsx tools/scaffold.ts test",
     "new:page": "tsx tools/scaffold.ts page",
     "scenarios:coverage": "tsx tools/scenario-coverage.ts",
+    "docs:check": "tsx tools/docs-check.ts",
     "format:check": "prettier --check .",
-    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run scenarios:coverage && npm test"
+    "checks": "npm run typecheck && npm run lint && npm run format:check && npm run docs:check && npm run scenarios:coverage",
+    "verify": "npm run checks && npm test"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

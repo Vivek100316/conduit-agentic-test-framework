@@ -25,9 +25,13 @@ export default defineConfig({
 
   projects: [
     {
+      /**
+       * No `baseURL`: API tests never call `page.goto`, and `ConduitClient` builds
+       * absolute URLs from `env` so that the one place URLs are assembled is `apiUrl()`.
+       * A baseURL here would be config that looks load-bearing and is not.
+       */
       name: 'api',
       testDir: './tests/api',
-      use: { baseURL: env.API_BASE_URL },
     },
     {
       name: 'ui',

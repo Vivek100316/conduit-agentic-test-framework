@@ -6,7 +6,7 @@ description: Add an API test to this framework. Use when asked to cover an endpo
 # Add an API test
 
 Follow [Engineering Standards](../../../docs/ENGINEERING_STANDARDS.md) and
-[Test Data](../../../docs/TEST_DATA.md).
+[Test Data](../../../docs/ENGINEERING_STANDARDS.md#test-data).
 
 ## 1. Confirm the app is running
 
@@ -85,7 +85,7 @@ Typecheck, lint, scenario coverage, both suites. Green means done.
 
 ## 7. When a new deviation turns up — stop and ask
 
-Follow [DEVIATION_POLICY.md](../../../docs/DEVIATION_POLICY.md). The short version:
+Follow [API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree). The short version:
 
 **Do not decide alone, and do not quietly assert whatever the app happens to do.** The
 specification is the source of truth about intent; the app is the source of truth about

@@ -7,7 +7,7 @@ import { unique } from './unique';
  *
  * Tags in particular must be unique: Conduit's tag list is global — shared by every test
  * in the run — so a fixed tag name would make any assertion about tags depend on whatever
- * else happened to be running. See docs/TEST_DATA.md.
+ * else happened to be running. See docs/ENGINEERING_STANDARDS.md.
  *
  * The body is deliberately dull. A test that asserts on content passes its own via
  * `overrides`, which keeps the assertion visible in the test rather than buried in a

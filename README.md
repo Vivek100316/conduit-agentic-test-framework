@@ -27,17 +27,19 @@ is down, it prints the exact command to start it.
 
 ## Commands
 
-| Command                                | What it does                                                                         |
-| -------------------------------------- | ------------------------------------------------------------------------------------ |
-| `npm run verify`                       | Types, lint, format, coverage, and both test suites. **Run this before every push.** |
-| `npm run test:api`                     | API tests only. Under a second — this is the fast loop while writing.                |
-| `npm run test:ui`                      | UI tests only.                                                                       |
-| `npm test`                             | Everything.                                                                          |
-| `npm run lint`                         | Guardrails and code style.                                                           |
-| `npm run app:health`                   | Is the app under test running?                                                       |
-| `npm run scenarios:coverage`           | How many designed scenarios are actually implemented.                                |
-| `npm run new:test -- <api\|ui> <name>` | Create a new test file that already passes `verify`.                                 |
-| `npm run new:page -- <Name>`           | Create a new page object.                                                            |
+| Command                                | What it does                                                                |
+| -------------------------------------- | --------------------------------------------------------------------------- |
+| `npm run verify`                       | Everything: `checks` plus both test suites. **Run this before every push.** |
+| `npm run checks`                       | The static half — no app needed. This is what CI runs.                      |
+| `npm run test:api`                     | API tests only. Under a second — this is the fast loop while writing.       |
+| `npm run test:ui`                      | UI tests only.                                                              |
+| `npm test`                             | Everything.                                                                 |
+| `npm run lint`                         | Guardrails and code style.                                                  |
+| `npm run app:health`                   | Is the app under test running?                                              |
+| `npm run scenarios:coverage`           | How many designed scenarios are actually implemented.                       |
+| `npm run docs:check`                   | Do the docs point at scripts and files that exist?                          |
+| `npm run new:test -- <api\|ui> <name>` | Create a new test file that already passes `verify`.                        |
+| `npm run new:page -- <Name>`           | Create a new page object.                                                   |
 
 ## How it all fits together
 
@@ -192,7 +194,7 @@ docs/            Standards, data strategy, deviations, scenario designs
 
 ## The agentic infrastructure
 
-Eight pieces. Each one blocks a specific mistake listed above — nothing was added just to
+Ten pieces. Each one blocks a specific mistake listed above — nothing was added just to
 round out the set.
 
 | Piece                             | Mistake it blocks                                           |
@@ -205,6 +207,8 @@ round out the set.
 | `.claude/skills/triage-failure`   | "Fixing" a test that was correctly reporting a real bug     |
 | `.claude/agents/selector-scout`   | Selectors written from memory instead of from the live page |
 | `npm run new:test` / `new:page`   | Conventions you have to read a document to follow           |
+| `npm run docs:check`              | Docs that quietly stop matching the code                    |
+| `.github/workflows/checks.yml`    | The static gate being skipped because someone forgot        |
 
 The hook is the piece worth trying yourself: open a test file, put a locator in it, save,
 and the complaint arrives before you have moved on. Rules only ever say _no_ — the
@@ -216,11 +220,16 @@ Coverage is a number the tools work out, not a claim:
 ```
 $ npm run scenarios:coverage
   Priority   Implemented / Designed
-  P0                   5 / 11
-  P1                   1 / 15
-  P2                   0 / 4
-  TOTAL                6 / 30
+  P0                   5 / 7
+  P1                   1 / 6
+  P2                   0 / 2
+  TOTAL                6 / 15
 ```
+
+`docs/scenarios/authentication.md` is written out in full — twelve scenarios, three
+implemented, each omission with a reason. `articles.md` deliberately lists only what it has
+delivered, so that running `design-scenarios` against that feature regenerates the rest and
+the designed count climbs. That is the skill doing its job in the open.
 
 A scenario that is designed but not implemented never fails the build. An **orphan** — a
 test claiming an ID that no design defines — always does. See [D-004](DECISIONS.md) for why
@@ -255,7 +264,7 @@ up afterwards. That is what lets the suite run fully parallel.
 The one weak spot is genuinely shared state: Conduit's tag list and Global Feed belong to
 every test at once. So the standards ban counting them and require relative checks instead —
 a hard count would be a race by design. Full reasoning in
-[docs/TEST_DATA.md](docs/TEST_DATA.md).
+[docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md#test-data).
 
 ## What is covered
 

@@ -53,7 +53,7 @@ does this and reports verified counts.
 
 Every test builds its own data with a factory. No shared accounts, no database reset, no
 teardown. Never assert absolute counts against the tag sidebar or Global Feed — they are
-shared by every test in the run. See [docs/TEST_DATA.md](docs/TEST_DATA.md).
+shared by every test in the run. See [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md#test-data).
 
 ## Definition of done
 
@@ -82,11 +82,12 @@ README.
 
 ## Reference
 
-- [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md) — naming, assertions,
-  polling, structure
-- [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md) — where the app disagrees with the spec
-- [docs/DEVIATION_POLICY.md](docs/DEVIATION_POLICY.md) — what to do when the app and
-  its spec disagree. **Escalate; never decide alone.**
-- [docs/TEST_DATA.md](docs/TEST_DATA.md) — data strategy
+- [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md) — naming, locators,
+  assertions, waiting, structure, and
+  [test data](docs/ENGINEERING_STANDARDS.md#test-data)
+- [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md) — every place the app disagrees with its
+  spec, and the
+  [policy for what to do about it](docs/API_DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree).
+  **Escalate; never decide alone.**
 - [DECISIONS.md](DECISIONS.md) — architecture decisions and what would change them
 - [docs/APP_SETUP.md](docs/APP_SETUP.md) — running the app under test

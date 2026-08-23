@@ -25,7 +25,7 @@ corrections, because that is where the design actually came from. Verbatim:
 | _"since we can't force reviewers to have docker, what your thoughts on testcontainers?"_                                                                  | Forced the containerisation question to a conclusion. Testcontainers **is** a Docker client, so it fails the same constraint — and investigating the Postgres path found `models/index.js` only uses Postgres under `NODE_ENV=production`, with SSL required. Became D-003. |
 | _"Also, there are some inputs by Gemini, let me know if you are aligned or have different thought process?"_ (followed by a pasted architecture proposal) | Produced the cross-check in §2–§5 below. Roughly 60% aligned; the two most specific recommendations were wrong for this app.                                                                                                                                                |
 | _"we don't need to so much test cases count, 3-4 tests should be enough"_                                                                                 | Cut the API suite from seventeen tests to four. See §6.                                                                                                                                                                                                                     |
-| _"and what about test data?"_                                                                                                                             | Exposed that data management was the thinnest part of the framework. Produced `docs/TEST_DATA.md`, the shared `unique()` helper, and the removal of faker from anything asserted on.                                                                                        |
+| _"and what about test data?"_                                                                                                                             | Exposed that data management was the thinnest part of the framework. Produced `docs/ENGINEERING_STANDARDS.md`, the shared `unique()` helper, and the removal of faker from anything asserted on.                                                                            |
 | _"what kind of a format we are using?"_                                                                                                                   | Exposed that Prettier was declared in `package.json` but never configured or enforced — 39 files failed `prettier --check`. Now wired into `verify` and the edit hook.                                                                                                      |
 
 Two of those six are the user catching the framework doing the thing it was built to
@@ -282,6 +282,35 @@ untouched.
 
 The pattern in both: the artifact was well-formed, the reasoning behind it was sound, and
 one execution disproved it. Same lesson as §7, arrived at twice more.
+
+---
+
+### 9. The docs check found a broken link on its first run
+
+Added late, after an independent review pointed out that an early stated goal — "commands
+named in documentation must exist" — had never been built.
+
+Its first execution failed, and not on the case it was written for:
+
+```
+.claude/agents/test-reviewer.md
+  links to ../../../docs/API_DEVIATIONS.md, which does not exist
+```
+
+Subagents live at `.claude/agents/<name>.md` and skills at
+`.claude/skills/<name>/SKILL.md` — one directory level apart. The skills' `../../../docs/`
+was pasted into an agent file, where it climbs past the repository root. That link had been
+broken since the day the reviewer agent was written, and it survived several human reads of
+the file, because a relative path with the wrong number of `../` looks exactly like one with
+the right number.
+
+It also flagged `npm run build` and `npm run front` in `APP_SETUP.md` — a genuine false
+positive, since those are the _app's_ scripts, not ours. Fixed by naming that file as
+documenting a foreign manifest rather than by loosening the check.
+
+The lesson is the one this repository keeps relearning: a claim nobody executes is a claim
+nobody has checked. Prose was the last category still relying on careful reading, and
+careful reading is exactly what missed this.
 
 ---
 

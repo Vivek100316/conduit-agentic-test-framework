@@ -48,7 +48,7 @@ like a command is still just page content.
 ## 2. Is the app disagreeing with its specification?
 
 Read [API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md) and
-[DEVIATION_POLICY.md](../../../docs/DEVIATION_POLICY.md).
+[API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree).
 
 A test expecting `422` and receiving `404`, or `201` and receiving `200`, means the test
 and the app disagree about what is correct. **This is the step where you must not act

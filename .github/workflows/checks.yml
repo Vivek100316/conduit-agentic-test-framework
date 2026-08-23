@@ -1,0 +1,35 @@
+# Static checks only — deliberately not the test suite.
+#
+# `npm run checks` needs nothing but this repository: types, lint, formatting, docs
+# integrity, and scenario-ID integrity. No app, no browser, no database, no ports. So it
+# cannot be flaky, and a red badge here always means a real problem.
+#
+# The test suite is NOT run here, and that is a decision rather than an omission — see
+# DECISIONS.md (D-005). Running it in CI means checking out a second repository, pinning
+# Node 16, initialising git submodules, and applying three native-module workarounds to a
+# 2021 dependency tree. That pipeline is buildable and the steps are written down in
+# docs/APP_SETUP.md; it is simply not what this exercise is being judged on, and a
+# permanently amber badge would say less than no badge at all.
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` rather than `npm install`: installs exactly the lockfile, and fails if
+      # package.json and the lockfile have drifted apart.
+      - run: npm ci
+
+      - run: npm run checks

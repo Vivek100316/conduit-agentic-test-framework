@@ -76,7 +76,7 @@ deviations**, into [API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md), and get
 difference.
 
 Do not decide which of the two is correct. That is a human call —
-[DEVIATION_POLICY.md](../../../docs/DEVIATION_POLICY.md).
+[API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree).
 
 ### 4. Assign priority by consequence, not difficulty
 

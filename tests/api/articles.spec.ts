@@ -11,15 +11,22 @@ test.describe('Articles', () => {
     expect(created.author.username).toBe(registeredUser.username);
 
     /**
-     * Documented deviation, and the reason this assertion looks wrong at first glance.
+     * DEFECT — deviation classified per docs/API_DEVIATIONS.md § Policy. This is why the
+     * assertion below looks wrong at first glance.
+     *
      * `setArticleTags` (routes/api/articles.js:5) does not return its inner
      * `Tag.findAll(...).then(...)` chain, so `Promise.all` resolves and the article is
      * serialised before the tag association is written. The create response therefore
-     * never echoes tags — deterministically, verified over repeated runs — while an
+     * never echoes tags — deterministically, verified over five repeated runs — while an
      * immediate read shows them.
      *
-     * The natural assertion is `expect(created.tagList).toEqual(input.tagList)`, which is
-     * what the spec implies and what this app never does. See docs/API_DEVIATIONS.md.
+     * Classified a defect rather than an intentional difference: it is an unreturned
+     * promise, which is a mistake in every reading, and it makes the create response an
+     * unreliable description of what was just created.
+     *
+     * The natural assertion is `expect(created.tagList).toEqual(input.tagList)` — what the
+     * spec implies and what this app never does. Asserting `[]` pins current behaviour;
+     * when the promise chain is fixed this test fails and names the change.
      */
     expect(created.tagList).toEqual([]);
 

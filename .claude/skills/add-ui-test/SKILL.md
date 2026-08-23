@@ -6,7 +6,7 @@ description: Add a UI test to this framework. Use when asked to cover a screen, 
 # Add a UI test
 
 Follow [Engineering Standards](../../../docs/ENGINEERING_STANDARDS.md) and
-[Test Data](../../../docs/TEST_DATA.md).
+[Test Data](../../../docs/ENGINEERING_STANDARDS.md#test-data).
 
 ## 1. Ask whether this belongs in the UI at all
 

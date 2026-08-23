@@ -26,12 +26,20 @@ test.describe('Authentication', () => {
     const response = await api.registerRaw({ ...input, username: `${input.username}_2` });
 
     /**
-     * Documented deviation. The RealWorld spec — and realworld/api/swagger.json in the
-     * app repo — says this is `422` with a JSON error body. This fork returns `404` with
-     * `text/html`, because routes/api/users.js catches the save error and calls `next()`
-     * with no argument, so the request falls through to the generic 404 handler.
+     * DEFECT — deviation classified per docs/API_DEVIATIONS.md § Policy.
      *
-     * We assert the behaviour that exists. See docs/API_DEVIATIONS.md.
+     * The spec (realworld/api/swagger.json) requires `422` with a JSON error body. The
+     * app returns `404` with `text/html`, because routes/api/users.js catches the save
+     * error and calls `next()` with **no argument** — so Express does not treat it as an
+     * error and the request falls through to the generic 404 handler.
+     *
+     * Classified a defect rather than an intentional difference: no one would design a
+     * validation failure to report "not found", and the cause is a visible mistake rather
+     * than a choice.
+     *
+     * Asserted as-is so the suite describes reality. This pins **current** behaviour: if
+     * the app is fixed to return 422, this test fails loudly and points straight here,
+     * which is the intended signal — not a regression.
      */
     expect(response.status()).toBe(404);
     expect(response.headers()['content-type']).toContain('text/html');

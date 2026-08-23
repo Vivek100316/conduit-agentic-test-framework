@@ -5,7 +5,17 @@ const tseslint = require('typescript-eslint');
 const playwright = require('eslint-plugin-playwright');
 const prettier = require('eslint-config-prettier');
 
-const guardrails = require('./eslint-rules');
+/**
+ * The repository's own guardrail rules. Declared inline rather than behind an index
+ * barrel — with two rules, a file whose only job is re-exporting them is a file to keep
+ * in sync for no benefit. Each rule's rationale lives in its own doc comment.
+ */
+const guardrails = {
+  rules: {
+    'no-locators-outside-page-objects': require('./eslint-rules/no-locators-outside-page-objects'),
+    'no-raw-http-outside-api-client': require('./eslint-rules/no-raw-http-outside-api-client'),
+  },
+};
 
 module.exports = tseslint.config(
   {
