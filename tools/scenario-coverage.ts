@@ -19,6 +19,16 @@ const TEST_DIR = join(REPO_ROOT, 'tests');
 
 const ID_PATTERN = /\b([A-Z][A-Z0-9]*-P[0-2]-\d{2,})\b/g;
 
+/**
+ * A scenario is only claimed by a **test title**, never by a mention elsewhere in the file.
+ *
+ * Scanning whole files was the first implementation and it was too generous: an ID written
+ * in a code comment — explaining a related scenario, say — counted as implemented, so the
+ * coverage report over-stated itself. Anchoring on `test(` and `test.describe(` titles means
+ * the number reflects tests that actually run.
+ */
+const TEST_TITLE_PATTERN = /\btest(?:\.describe)?(?:\.\w+)*\s*\(\s*(['"`])([\s\S]*?)\1/g;
+
 interface DesignedScenario {
   id: string;
   priority: string;
@@ -70,10 +80,12 @@ function readImplemented(): Map<string, string> {
 
   for (const file of walk(TEST_DIR, '.spec.ts')) {
     const contents = readFileSync(file, 'utf8');
-    for (const match of contents.matchAll(ID_PATTERN)) {
-      const id = match[1];
-      if (id !== undefined) {
-        implemented.set(id, relative(REPO_ROOT, file));
+    for (const title of contents.matchAll(TEST_TITLE_PATTERN)) {
+      for (const match of (title[2] ?? '').matchAll(ID_PATTERN)) {
+        const id = match[1];
+        if (id !== undefined) {
+          implemented.set(id, relative(REPO_ROOT, file));
+        }
       }
     }
   }
