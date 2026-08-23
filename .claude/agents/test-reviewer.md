@@ -45,7 +45,7 @@ The most common defect in a passing suite is a test that cannot fail.
 ### Is it asserting the app or the spec?
 
 Check every status code and shape against
-[API_DEVIATIONS.md](../../docs/API_DEVIATIONS.md). An assertion of `422` on duplicate
+[DEVIATIONS.md](../../docs/DEVIATIONS.md). An assertion of `422` on duplicate
 registration, or `201` on create, means the test was written from
 `realworld/api/swagger.json` rather than from the running app. This app returns `200` and
 `404 text/html` respectively.
@@ -54,7 +54,7 @@ Equally: if a test asserts something that _contradicts_ a documented deviation, 
 the app changed. That is a finding worth surfacing, not a test to fix.
 
 **A deviation asserted without being labelled is a finding of its own.** Following
-[API_DEVIATIONS.md](../../docs/API_DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree), a test pinning behaviour that
+[DEVIATIONS.md](../../docs/DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree), a test pinning behaviour that
 contradicts the spec must say at the assertion which it is — defect, stale spec, or
 deliberate difference — so that a future fix to the app fails loudly and points at why. An
 unannotated `expect(status).toBe(404)` where the spec says `422` silently promotes a bug to

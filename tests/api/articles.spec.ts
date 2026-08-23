@@ -11,7 +11,7 @@ test.describe('Articles', () => {
     expect(created.author.username).toBe(registeredUser.username);
 
     /**
-     * DEFECT — deviation classified per docs/API_DEVIATIONS.md § Policy. This is why the
+     * DEFECT — deviation classified per docs/DEVIATIONS.md § Policy. This is why the
      * assertion below looks wrong at first glance.
      *
      * `setArticleTags` (routes/api/articles.js:5) does not return its inner

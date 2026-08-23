@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 /**
  * Verified against the running app. Where these disagree with the RealWorld spec, the
- * app wins and the difference is catalogued in docs/API_DEVIATIONS.md.
+ * app wins and the difference is catalogued in docs/DEVIATIONS.md.
  */
 
 /**
@@ -19,7 +19,7 @@ import { z } from 'zod';
  * working when a server adds a field. This is not a production client; it is a suite whose
  * job is to notice that the contract moved. An unexpected field means someone changed the
  * API, and that is information, delivered here with the route name attached and a ten-second
- * fix (add the field, note it in API_DEVIATIONS.md).
+ * fix (add the field, note it in DEVIATIONS.md).
  *
  * Flip condition: a fast-moving API where additive change is routine. There, strict schemas
  * produce noise, and noise teaches people to loosen schemas reflexively — the exact habit

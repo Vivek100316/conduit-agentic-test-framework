@@ -28,7 +28,7 @@ A test without a designed scenario is a test nobody decided was worth writing.
 
 ## 3. Observe the endpoint before asserting on it
 
-**This is the step that matters.** Read [API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md)
+**This is the step that matters.** Read [DEVIATIONS.md](../../../docs/DEVIATIONS.md)
 first, then issue the request yourself and record what actually comes back:
 
 ```bash
@@ -85,7 +85,7 @@ Typecheck, lint, scenario coverage, both suites. Green means done.
 
 ## 7. When a new deviation turns up — stop and ask
 
-Follow [API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree). The short version:
+Follow [DEVIATIONS.md](../../../docs/DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree). The short version:
 
 **Do not decide alone, and do not quietly assert whatever the app happens to do.** The
 specification is the source of truth about intent; the app is the source of truth about

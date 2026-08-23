@@ -187,7 +187,7 @@ was designed to catch: a plausible, spec-endorsed assertion that fails against t
 app. Had it been written from the spec and then seen to fail, the tempting fix would have
 been to loosen the assertion or add a wait — treating a deterministic app behaviour as
 flake. Probing first meant the deviation was documented (`ART-P1-01`,
-`docs/API_DEVIATIONS.md`) instead of papered over.
+`docs/DEVIATIONS.md`) instead of papered over.
 
 Every test written this way passed on its first run, which is the intended consequence of
 observing before asserting rather than a sign that the tests are weak.
@@ -294,7 +294,7 @@ Its first execution failed, and not on the case it was written for:
 
 ```
 .claude/agents/test-reviewer.md
-  links to ../../../docs/API_DEVIATIONS.md, which does not exist
+  links to ../../../docs/DEVIATIONS.md, which does not exist
 ```
 
 Subagents live at `.claude/agents/<name>.md` and skills at

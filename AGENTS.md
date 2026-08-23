@@ -25,16 +25,21 @@ do not start editing tests.**
 A `PostToolUse` hook lints every TypeScript file the moment it is written, so violations
 come back immediately rather than at commit time.
 
-## Never trust the spec
+## Never trust the spec — and the UI deviates too
 
 `realworld/api/swagger.json` describes the canonical RealWorld API, not this fork. They
 disagree: registration returns `200` not `201`, a duplicate email returns `404 text/html`
 not `422 JSON`, `bio` is `""` from register but `null` from login, and `POST /articles`
 never echoes the tags it was sent.
 
-Issue the request against the running app and assert what it does.
-[docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md) catalogues every deviation with the route
-file and line responsible.
+The UI departs from ordinary web convention as well: Enter does not submit the editor form,
+a tag typed without pressing Enter is silently discarded, and an article's URL keeps its old
+slug after a rename. Those are deviations even though no document specifies them.
+
+Exercise the running app and assert what it actually does.
+[docs/DEVIATIONS.md](docs/DEVIATIONS.md) catalogues both halves, each with the file and line
+responsible. Found a new one? Reproduce, find the cause, propose a classification, and
+**ask** — never decide alone.
 
 ## Locators, specifically
 
@@ -85,9 +90,9 @@ README.
 - [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md) — naming, locators,
   assertions, waiting, structure, and
   [test data](docs/ENGINEERING_STANDARDS.md#test-data)
-- [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md) — every place the app disagrees with its
+- [docs/DEVIATIONS.md](docs/DEVIATIONS.md) — every place the app disagrees with its
   spec, and the
-  [policy for what to do about it](docs/API_DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree).
+  [policy for what to do about it](docs/DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree).
   **Escalate; never decide alone.**
 - [DECISIONS.md](DECISIONS.md) — architecture decisions and what would change them
 - [docs/APP_SETUP.md](docs/APP_SETUP.md) — running the app under test

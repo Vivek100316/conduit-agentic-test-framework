@@ -35,7 +35,7 @@ which point the rule is training people to ignore it and should be narrowed.
 
 **Chosen.** The typed client in `src/api/` validates every response against a Zod schema
 written from requests actually issued against the running app. Deviations are asserted as
-they are and catalogued in `docs/API_DEVIATIONS.md`.
+they are and catalogued in `docs/DEVIATIONS.md`.
 
 The app ships `realworld/api/swagger.json`, and it is wrong about this fork in four
 verified ways:

@@ -1,19 +1,28 @@
-# Observed API Deviations
+# Observed Deviations
 
-Every row was verified by issuing the request against the running app, not read from a
-specification. `realworld/api/swagger.json` in the app repository describes the canonical
-RealWorld API; this fork differs from it in the ways below.
+Where the app behaves differently from what its documentation, its specification, or
+ordinary web convention would lead you to expect — **across both the API and the UI**.
 
-**This file is the reason `no-raw-http-outside-api-client` exists.** An agent writing a
-one-off request inside a test reproduces the spec's version of events. An agent adding a
-method to `ConduitClient` has to look at a real response.
+Everything here was verified by exercising the running app, never read from a
+specification. For the API, the document it disagrees with is
+`realworld/api/swagger.json`, which describes the canonical RealWorld API rather than this
+fork. For the UI there is no such document — the yardstick is the app's own consistency and
+what any user would expect a form to do.
 
-If you find a new deviation: assert what the app does, add a row here with the route file
-and line that causes it, and reference it from the test.
+**This file is the reason both guardrail rules exist.** An agent writing a one-off request
+inside a test reproduces the spec's version of events; an agent adding a method to
+`ConduitClient` has to look at a real response. An agent inventing a selector reproduces
+what a login form usually looks like; an agent editing a page object has to open the page.
+
+If you find a new deviation, do **not** simply encode it. Reproduce it, find the cause in
+the app's source, propose a classification, and ask — see [§ Policy](#policy--when-the-app-and-the-spec-disagree)
+at the end of this file.
 
 ---
 
-## Status codes
+## API deviations
+
+### Status codes
 
 | Endpoint                                        | Spec       | Actual                                                     | Cause                                                                                                                                                             |
 | ----------------------------------------------- | ---------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -30,9 +39,9 @@ Any helper that assumes an error response is JSON will throw while parsing, whic
 
 ---
 
-## Payload shapes
+### Payload shapes
 
-### `bio` and `image` change type depending on how you authenticated
+#### `bio` and `image` change type depending on how you authenticated
 
 | Call                            | `bio`  | `image`                                                       |
 | ------------------------------- | ------ | ------------------------------------------------------------- |
@@ -51,7 +60,7 @@ for the embedded author's `image`. TypeScript alone would not have caught this �
 erased at runtime, so a client typed `{ bio: string }` accepts `null` silently and fails
 later, somewhere else.
 
-### `POST /articles` never returns the tags you sent
+#### `POST /articles` never returns the tags you sent
 
 Deterministic, verified over repeated runs: the create response always carries
 `tagList: []`, and an immediate read of the same article returns the tags.
@@ -67,23 +76,24 @@ run 3: create=[]  get=['alpha…', 'beta…']
 serialised before the tag association is written.
 
 The natural assertion — `expect(created.tagList).toEqual(input.tagList)` — is what the
-spec implies and what this app never does. Covered by `ART-P1-01`.
+spec implies and what this app never does. Pinned by `ART-P0-01`.
 
 ---
 
-## Behaviour
+### Behaviour
 
-### The slug does not follow the title
+#### The slug does not follow the title
 
 RealWorld implementations normally regenerate the slug when the title changes. This one
 assigns the new title and leaves `slug` alone (`routes/api/articles.js:169`), so existing
-links keep working. Arguably better behaviour than the spec; still a deviation. Covered by
-`ART-P1-02`.
+links keep working. Arguably better behaviour than the spec; still a deviation.
+Designed but not implemented — see the UI half of this section for the browser-visible
+consequence.
 
 Slugs carry a random suffix (`my-title-a1b2c3`), so two articles with identical titles do
 not collide — which is what makes parallel article creation safe.
 
-### Both `Token` and `Bearer` are accepted
+#### Both `Token` and `Bearer` are accepted
 
 `routes/auth.js` accepts either scheme. The RealWorld spec defines `Token`, and the app's
 own frontend sends `Token`.
@@ -94,6 +104,62 @@ signals it. `authHeader()` in `src/api/conduit-client.ts` is the single place th
 and it sends `Token`.
 
 ---
+
+## UI deviations
+
+A deviation is not only an HTTP contract problem. The browser has its own expectations —
+form conventions, what a control does, what feedback an action gives — and this app departs
+from several. These were found by driving the running UI and reading the result, the same
+way the API rows above were found.
+
+### A tag typed but not committed is silently discarded
+
+Type a tag into the editor's tag field and publish **without pressing Enter**, and the tag
+vanishes. No warning, no validation message, and the article publishes successfully with no
+tags at all.
+
+```
+PROBE uncommitted tag -> tagList = []
+```
+
+The tag field commits on `keyup` of Enter (`src/components/Editor.js:140`); nothing reads
+the field's residual value at submit time. A user who types a tag and clicks Publish — the
+obvious sequence — loses it without being told.
+
+**Classified a defect.** Silent data loss on the happy path is not a defensible design
+choice. Worth reporting to the app's owners, not merely testing. Designed as `UI-P1-03` in
+[scenarios/articles.md](scenarios/articles.md); unimplemented.
+
+### Enter in a form field does not submit the form
+
+Pressing Enter in the editor's title field does nothing — the page stays put.
+
+```
+PROBE after Enter in title, url = http://localhost:4101/editor
+```
+
+The Publish control is `type="button"` with a click handler
+(`src/components/Editor.js:159`), not a submit inside a form with an `onSubmit`. Implicit
+form submission never fires. The login form, by contrast, _is_ a real submit form, so Enter
+works there — the app is inconsistent with itself, which is the part likeliest to surprise
+a user.
+
+**Classified a defect**, low severity: it costs a keystroke, not data.
+
+### An article's URL keeps the old slug after a rename
+
+Rename an article and its original URL still resolves, now showing the new title:
+
+```
+PROBE old slug still resolves = true, h1 = "Totally New Title"
+```
+
+This is the UI-visible half of the slug behaviour recorded above. RealWorld implementations
+normally regenerate the slug, which breaks every existing link to that article.
+
+**Classified a deliberate difference, and arguably better than the spec.** Stable URLs are a
+feature. Recorded so that nobody "fixes" it into spec compliance without noticing what they
+would break.
 
 ## Not deviations, but worth knowing
 
@@ -113,10 +179,15 @@ What to do when the app and its specification disagree.
 
 ### The two sources, and what each is good for
 
-|                              | Says                               | Use it for                                                  |
-| ---------------------------- | ---------------------------------- | ----------------------------------------------------------- |
-| `realworld/api/swagger.json` | What the app is **supposed** to do | Designing scenarios — deriving what is worth testing at all |
-| The running app              | What the app **currently** does    | Writing assertions — the suite must describe reality        |
+The policy below applies to **both halves of this document**. For the API the written
+source is the spec; for the UI it is the product's own consistency and ordinary web
+convention — a form that ignores Enter, or a field that silently drops input, is a
+deviation from what a user is entitled to expect even though no document says so.
+
+|                         | Says                               | Use it for                                                  |
+| ----------------------- | ---------------------------------- | ----------------------------------------------------------- |
+| The spec, or convention | What the app is **supposed** to do | Designing scenarios — deriving what is worth testing at all |
+| The running app         | What the app **currently** does    | Writing assertions — the suite must describe reality        |
 
 Both matter, and conflating them is where suites go wrong in one of two directions.
 
@@ -141,7 +212,7 @@ across runs is a finding. The `tagList` deviation was confirmed over five runs b
 was written down.
 
 **2. Find the cause in the app's source.** A deviation you cannot explain might be your
-own request being wrong. Every row in `API_DEVIATIONS.md` names a file and line.
+own request being wrong. Every row in `DEVIATIONS.md` names a file and line.
 
 **3. Classify it.** This is the judgement an agent should surface rather than make:
 
@@ -154,7 +225,7 @@ own request being wrong. Every row in `API_DEVIATIONS.md` names a file and line.
 **4. Ask.** Present the evidence, the cause, the classification, and the options. Then
 wait. Do not write the assertion first and mention it afterwards.
 
-**5. Record whichever way it goes.** A row in `API_DEVIATIONS.md`, and a comment at the
+**5. Record whichever way it goes.** A row in `DEVIATIONS.md`, and a comment at the
 assertion pointing there.
 
 ### What gets written once it is decided
@@ -166,7 +237,7 @@ For a **defect**, the test says so, and the defect gets reported to the app's ow
 
 ```ts
 /**
- * DEFECT (see docs/API_DEVIATIONS.md): the spec requires 422 with a JSON error body.
+ * DEFECT (see docs/DEVIATIONS.md): the spec requires 422 with a JSON error body.
  * The app returns 404 text/html because routes/api/users.js catches the save error and
  * calls next() with no argument. Asserted as-is so the suite describes reality; this is
  * pinned to the *current* behaviour and should be updated when the app is fixed.

@@ -63,7 +63,7 @@ function testTemplate(project: string, name: string): string {
     registeredUser,
   }) => {
     // Observe the endpoint against the running app before asserting on it.
-    // docs/API_DEVIATIONS.md lists where this app disagrees with the RealWorld spec.
+    // docs/DEVIATIONS.md lists where this app disagrees with the RealWorld spec.
     const result = await api.currentUser(registeredUser.token);
 
     expect(result.username).toBe(registeredUser.username);

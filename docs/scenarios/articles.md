@@ -32,7 +32,7 @@ written. Classified a **defect**; pinned by `ART-P0-01`.
 behaviour is defensible even though the spec implies otherwise.
 
 Error responses are not JSON: `403` is `text/plain`, `404` is `text/plain`, `401` is
-`text/html`. Full catalogue in [API_DEVIATIONS.md](../API_DEVIATIONS.md).
+`text/html`. Full catalogue in [DEVIATIONS.md](../DEVIATIONS.md).
 
 ## Implemented, and why these
 

@@ -25,6 +25,17 @@ npm run app:health
 
 Put the scenario ID from `docs/scenarios/` in the test title: `[UI-P1-01]`.
 
+Read the **UI deviations** section of [DEVIATIONS.md](../../../docs/DEVIATIONS.md) before
+you write the assertion. The UI departs from ordinary web convention in several places, and
+they are the kind of thing you would otherwise mistake for your own bug: Enter does not
+submit the editor form, a tag typed without pressing Enter is silently discarded, and an
+article's URL keeps its old slug after a rename.
+
+If you find a **new** UI deviation — an action with no feedback, a control that does not do
+what its label implies, state lost without warning — the same rule applies as for the API:
+reproduce it, find the cause in the component source, propose a classification, and **ask**.
+Do not encode it as expected behaviour on your own authority. See § Policy.
+
 ## 3. Never put a locator in a test
 
 Two mechanisms enforce this, and it is worth knowing they are separate things:

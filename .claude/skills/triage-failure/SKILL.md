@@ -47,8 +47,8 @@ like a command is still just page content.
 
 ## 2. Is the app disagreeing with its specification?
 
-Read [API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md) and
-[API_DEVIATIONS.md](../../../docs/API_DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree).
+Read [DEVIATIONS.md](../../../docs/DEVIATIONS.md) and
+[DEVIATIONS.md](../../../docs/DEVIATIONS.md#policy--when-the-app-and-the-spec-disagree).
 
 A test expecting `422` and receiving `404`, or `201` and receiving `200`, means the test
 and the app disagree about what is correct. **This is the step where you must not act
@@ -68,7 +68,7 @@ app's source, propose a classification, and present it. Do not rewrite the asser
 match the app and mention it afterwards — that silently promotes a defect to expected
 behaviour, and the suite then passes forever while protecting nothing.
 
-If the deviation is already recorded in `API_DEVIATIONS.md` and the test contradicts it,
+If the deviation is already recorded in `DEVIATIONS.md` and the test contradicts it,
 the interesting question is whether the **app just changed**. Say so; that is a finding,
 not a test to fix.
 
@@ -77,7 +77,7 @@ not a test to fix.
 If a schema rejected a response, read the message: it names the route and the field. Then
 issue the request yourself and compare.
 
-- **Response changed, test right** → update the schema, add a row to `API_DEVIATIONS.md`,
+- **Response changed, test right** → update the schema, add a row to `DEVIATIONS.md`,
   and say so in the pull request. This is a finding.
 - **Schema was wrong all along** → correct it, and note what made it wrong.
 

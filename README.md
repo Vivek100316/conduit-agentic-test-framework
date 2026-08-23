@@ -110,7 +110,7 @@ simply cannot contain a locator or an HTTP call.
 
 That matters because both doors are where the app's surprises live. The DOM has no test
 IDs and no labels, so a selector has to be checked against the running page. The API
-disagrees with its own published spec in nine places, so a response shape has to be checked
+disagrees with its own published spec in several places, so a response shape has to be checked
 against a real reply. Keeping both behind one door each means those checks happen once, in
 a file someone reviewed — not guessed at in every new test.
 
@@ -288,7 +288,7 @@ delete. That gap is a decision, not unfinished work. The brief asks for depth ov
 and puts full coverage out of scope, and a client that already speaks the whole API is what
 makes adding a test a test-only change. Every method was checked against a real response
 when it was written, and what that turned up is in
-[docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md).
+[docs/DEVIATIONS.md](docs/DEVIATIONS.md).
 
 ## Reviewing this repo in 30 minutes
 
@@ -308,6 +308,6 @@ That path runs idea → judgement → evidence → enforcement → proof.
 
 Conventions are in [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md). Where the
 app disagrees with the RealWorld spec — nine recorded places — see
-[docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md); every entry names the file and line in the
+[docs/DEVIATIONS.md](docs/DEVIATIONS.md); every entry names the file and line in the
 app that causes it. Notably, error responses are not JSON (`403` is `text/plain`, `401` is
 `text/html`), and `POST /articles` never returns the tags you sent it.

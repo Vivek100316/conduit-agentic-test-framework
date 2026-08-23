@@ -26,7 +26,7 @@ test.describe('Authentication', () => {
     const response = await api.registerRaw({ ...input, username: `${input.username}_2` });
 
     /**
-     * DEFECT — deviation classified per docs/API_DEVIATIONS.md § Policy.
+     * DEFECT — deviation classified per docs/DEVIATIONS.md § Policy.
      *
      * The spec (realworld/api/swagger.json) requires `422` with a JSON error body. The
      * app returns `404` with `text/html`, because routes/api/users.js catches the save
