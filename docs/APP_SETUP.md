@@ -97,10 +97,10 @@ which is `npm run front`.
 `realworld/api/swagger.json` is the canonical RealWorld reference spec, **not** a
 description of this fork. Confirmed by direct request against the running app:
 
-| Case | swagger.json | Actual |
-| --- | --- | --- |
-| `POST /api/users` success | `201` | **`200`** |
-| `POST /api/users` duplicate email | `422` JSON | **`404`**, `text/html`, body `error: 404 Not Found /api/users` |
+| Case                              | swagger.json | Actual                                                         |
+| --------------------------------- | ------------ | -------------------------------------------------------------- |
+| `POST /api/users` success         | `201`        | **`200`**                                                      |
+| `POST /api/users` duplicate email | `422` JSON   | **`404`**, `text/html`, body `error: 404 Not Found /api/users` |
 
 Cause: `routes/api/users.js` catches the save error and calls `next()` with no
 argument, so the request falls through to the generic 404 handler in `app.js`.

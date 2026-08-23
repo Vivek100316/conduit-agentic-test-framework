@@ -5,6 +5,7 @@ import type { Article } from '../api/schemas/article.schema';
 import type { AuthUser } from '../api/schemas/user.schema';
 import { buildArticle } from '../factories/article.factory';
 import { buildUser } from '../factories/user.factory';
+import { signInAs } from './session';
 
 /** A user that exists in the app, with the plaintext password so tests can log in as them. */
 export interface RegisteredUser extends AuthUser {
@@ -25,19 +26,23 @@ export interface ConduitFixtures {
   /** An article authored by `registeredUser`, created over the API. */
   authoredArticle: Article;
   /**
-   * A page that is already signed in as `registeredUser`.
+   * A page signed in as `registeredUser` — **convenience for the common case, not the
+   * mechanism.** The mechanism is `signInAs(page, user)` in ./session, which establishes
+   * a session for any user you hand it.
    *
-   * The session is injected straight into `localStorage.jwt`, which is where the app
-   * keeps it (src/middleware.js:52) and what it reads on boot (src/components/App.js:43).
+   * Reach for `signInAs` directly whenever the session is not simply "some ordinary
+   * user": a second account, or an admin or guest once such a thing exists. Conduit has
+   * no roles today, which is exactly why the seam is worth keeping visible — a hard-wired
+   * `authenticatedPage` is cheap now and expensive to unpick once every UI test depends
+   * on it.
    *
    * Deliberately not Playwright's `storageState`: that saves one session to a file and
-   * replays it across tests, which means a shared user — and this framework's isolation
-   * comes from every test owning unique data. `addInitScript` gives the same "skip the
-   * login form" speed while keeping one fresh user per test.
+   * replays it, which means a shared user, and this framework's isolation comes from
+   * every test owning unique data (D-003).
    *
-   * Signing in through the form is itself covered once, by UI-P0-01. Every other UI test
-   * takes this fast path, because re-proving login on the way to testing something else
-   * only buys extra ways to fail.
+   * Signing in through the form is covered once, by UI-P0-01. Every other UI test takes
+   * this fast path, because re-proving login on the way to testing something else only
+   * buys extra ways to fail.
    */
   authenticatedPage: Page;
 }
@@ -65,10 +70,7 @@ export const test = base.extend<ConduitFixtures>({
   },
 
   authenticatedPage: async ({ page, registeredUser }, use) => {
-    await page.addInitScript((token: string) => {
-      window.localStorage.setItem('jwt', token);
-    }, registeredUser.token);
-    await use(page);
+    await use(await signInAs(page, registeredUser));
   },
 });
 

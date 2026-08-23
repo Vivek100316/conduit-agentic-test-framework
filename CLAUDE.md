@@ -67,10 +67,31 @@ a login form usually looks like.
 ## Test data
 
 Every test builds its own data with a factory. No shared accounts, no database reset, no
-teardown. Do not add cleanup hooks.
+teardown — **do not add cleanup hooks**; cleanup that fails halfway leaves the database in
+a state nobody designed, and it surfaces in whichever test runs next.
+
+Factories generate valid data; tests supply asserted data. Anything you assert on is passed
+as an explicit override, so the assertion and the value satisfying it are visible together.
 
 Never assert absolute counts on the tag sidebar or Global Feed — they are shared across
 every test in the run. Assert relatively: "my article is present", not "there are 3".
+
+Full strategy: [docs/TEST_DATA.md](docs/TEST_DATA.md).
+
+## Skills and subagents
+
+| Name               | Use for                                    |
+| ------------------ | ------------------------------------------ |
+| `add-api-test`     | Covering an endpoint                       |
+| `add-ui-test`      | Covering a screen or journey               |
+| `design-scenarios` | Planning coverage for a feature            |
+| `triage-failure`   | A red test — **before** changing anything  |
+| `selector-scout`   | Verified locators for an unmodelled screen |
+| `test-reviewer`    | Reviewing a test before a pull request     |
+
+A `PostToolUse` hook lints every TypeScript file the moment it is written, so a banned
+locator or raw HTTP call comes back within the same train of thought rather than at commit
+time.
 
 ## Definition of done
 
@@ -78,8 +99,9 @@ every test in the run. Assert relatively: "my article is present", not "there ar
 npm run verify
 ```
 
-Typecheck, lint, API suite. Run it before every push and paste the output into the pull
-request. Update any documentation the change invalidates in the same commit.
+Typecheck, lint, scenario coverage, both suites. Run it before every push and paste the
+output into the pull request. Update any documentation the change invalidates in the same
+commit — including [AGENTS.md](AGENTS.md), which mirrors this file.
 
 ## Reference
 
@@ -87,6 +109,11 @@ request. Update any documentation the change invalidates in the same commit.
   polling, structure. The single source of truth; not duplicated elsewhere.
 - [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md) — where the app disagrees with the
   spec, and why.
+- [docs/DEVIATION_POLICY.md](docs/DEVIATION_POLICY.md) — what to do when the app and
+  its spec disagree. **Escalate; never decide alone.**
+- [docs/TEST_DATA.md](docs/TEST_DATA.md) — data strategy and its limits.
+- [docs/scenarios/](docs/scenarios/) — prioritised scenario designs. A test claims one by
+  putting its ID in the title; `npm run scenarios:coverage` reports the gap.
 - [DECISIONS.md](DECISIONS.md) — why the framework is shaped this way, and what would
   change it.
 - [docs/APP_SETUP.md](docs/APP_SETUP.md) — running the app under test.

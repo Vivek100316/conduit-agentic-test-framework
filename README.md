@@ -25,32 +25,35 @@ prints the exact command to start whichever one is not.
 
 ## Commands
 
-| Command | What it does |
-| --- | --- |
-| `npm run verify` | Typecheck, lint, and run the API suite. **The definition of done — run before every push.** |
-| `npm run test:api` | API suite only. Sub-second; this is the inner loop. |
-| `npm run test:ui` | UI suite only. |
-| `npm test` | Everything. |
-| `npm run lint` | Guardrails and style. |
-| `npm run app:health` | Is the app under test running? |
+| Command                                | What it does                                                                                         |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `npm run verify`                       | Typecheck, lint, scenario coverage, both suites. **The definition of done — run before every push.** |
+| `npm run test:api`                     | API suite only. Sub-second; this is the inner loop.                                                  |
+| `npm run test:ui`                      | UI suite only.                                                                                       |
+| `npm test`                             | Everything.                                                                                          |
+| `npm run lint`                         | Guardrails and style.                                                                                |
+| `npm run app:health`                   | Is the app under test running?                                                                       |
+| `npm run scenarios:coverage`           | Designed scenarios vs. implemented ones.                                                             |
+| `npm run new:test -- <api\|ui> <name>` | Scaffold a spec that is green before you edit it.                                                    |
+| `npm run new:page -- <Name>`           | Scaffold a page object.                                                                              |
 
 ## What "agentic-first" means here
 
 An AI agent writing a test for this app has read a thousand RealWorld tutorials and zero
-lines of *this* fork. It produces code that is idiomatic, confident, and wrong in
+lines of _this_ fork. It produces code that is idiomatic, confident, and wrong in
 predictable ways. Every design choice below closes one of those specific failure modes
 structurally, rather than asking a contributor to remember something.
 
-| What an agent does | What stops it |
-| --- | --- |
-| `getByLabel('Password')` — no labels exist in this app | Locators are a lint error outside `src/pages/` |
-| `getByRole('textbox')` unqualified — 2 matches on the login form | Same rule; the page object holds a selector verified against the real DOM |
-| `.locator('.form-control')` — 2 matches on login, 4 in the editor | Same rule |
-| `expect(status).toBe(422)` on duplicate registration, because the spec says so | Raw HTTP is a lint error outside `src/api/`; the client's schemas encode observed behaviour |
-| `expect(created.tagList).toEqual(sentTags)` — the create response never echoes tags | Client method documents it; `ART-P1-01` pins the real behaviour |
-| `await page.waitForTimeout(1000)` | Lint error |
-| `expect(await x.isVisible()).toBe(true)` — evaluates once, never retries | Lint error (`prefer-web-first-assertions`) |
-| Assumes `bio` is a `string` | Runtime schema validation fails at the call site, naming the route |
+| What an agent does                                                                  | What stops it                                                                               |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `getByLabel('Password')` — no labels exist in this app                              | Locators are a lint error outside `src/pages/`                                              |
+| `getByRole('textbox')` unqualified — 2 matches on the login form                    | Same rule; the page object holds a selector verified against the real DOM                   |
+| `.locator('.form-control')` — 2 matches on login, 4 in the editor                   | Same rule                                                                                   |
+| `expect(status).toBe(422)` on duplicate registration, because the spec says so      | Raw HTTP is a lint error outside `src/api/`; the client's schemas encode observed behaviour |
+| `expect(created.tagList).toEqual(sentTags)` — the create response never echoes tags | Client method documents it; `ART-P1-01` pins the real behaviour                             |
+| `await page.waitForTimeout(1000)`                                                   | Lint error                                                                                  |
+| `expect(await x.isVisible()).toBe(true)` — evaluates once, never retries            | Lint error (`prefer-web-first-assertions`)                                                  |
+| Assumes `bio` is a `string`                                                         | Runtime schema validation fails at the call site, naming the route                          |
 
 These are not hypothetical. Running the guardrails against a file containing all of them
 produces six errors, each naming the fix.
@@ -65,10 +68,45 @@ src/fixtures/    Playwright fixtures composed with test.extend
 src/config/      Environment loading and validation
 tests/api/       API specs
 tests/ui/        UI specs
-tools/           Health check and repository checks
+tools/           Health check, scaffolding, scenario coverage
 eslint-rules/    Custom guardrail rules
-docs/            Standards, app setup
+.claude/         Skills, subagents, and the lint-on-edit hook
+docs/            Standards, data strategy, deviations, scenario designs
 ```
+
+## The agentic infrastructure
+
+Eight artifacts, each closing a failure mode named above rather than added for
+completeness.
+
+| Artifact                          | Closes                                                 |
+| --------------------------------- | ------------------------------------------------------ |
+| `eslint-rules/` (2 custom rules)  | Hallucinated selectors and one-off HTTP calls          |
+| `.claude/hooks/lint-changed.mjs`  | Delay between writing a violation and hearing about it |
+| `.claude/skills/add-api-test`     | Asserting the spec instead of the app                  |
+| `.claude/skills/add-ui-test`      | Guessing selectors on an app with no test ids          |
+| `.claude/skills/design-scenarios` | Coverage chosen by convenience rather than priority    |
+| `.claude/skills/triage-failure`   | "Fixing" a test that was correctly reporting a bug     |
+| `.claude/agents/selector-scout`   | Selectors derived from memory rather than the DOM      |
+| `npm run new:test` / `new:page`   | Conventions that must be read to be followed           |
+
+The hook is the piece worth trying: edit a spec, put a locator in it, and the violation
+comes back before you have moved on. Guardrails only ever say _no_ — the generators are the
+half that says _yes, here_, and a generated file passes `verify` before a line is changed.
+
+Coverage is a computed number, not a claim:
+
+```
+$ npm run scenarios:coverage
+  Priority   Implemented / Designed
+  P0                   5 / 11
+  P1                   1 / 15
+  P2                   0 / 4
+  TOTAL                6 / 30
+```
+
+Unimplemented scenarios never fail the build; an orphaned ID — one a test claims but no
+design defines — always does. See [D-004](DECISIONS.md).
 
 Conventions live in [docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md);
 architecture decisions and their rejected alternatives in [DECISIONS.md](DECISIONS.md);
@@ -83,14 +121,14 @@ line responsible. Notably, error responses are not JSON (`403` is `text/plain`, 
 
 Six tests: four API, two UI.
 
-| Test | Covers |
-| --- | --- |
-| `AUTH-P0-01` | Registration, token authenticates, credentials log in |
-| `AUTH-P1-01` | Duplicate email rejected — a documented `404` deviation |
-| `ART-P0-01` | Article published and read back — the `tagList` deviation |
-| `AUTHZ-P0-01` | Non-author cannot edit, and the article is genuinely unchanged |
-| `UI-P0-01` | Signing in through the form, and the session surviving a reload |
-| `UI-P0-02` | Publishing from the editor and the article rendering |
+| Test          | Covers                                                          |
+| ------------- | --------------------------------------------------------------- |
+| `AUTH-P0-01`  | Registration, token authenticates, credentials log in           |
+| `AUTH-P1-01`  | Duplicate email rejected — a documented `404` deviation         |
+| `ART-P0-01`   | Article published and read back — the `tagList` deviation       |
+| `AUTHZ-P0-01` | Non-author cannot edit, and the article is genuinely unchanged  |
+| `UI-P0-01`    | Signing in through the form, and the session surviving a reload |
+| `UI-P0-02`    | Publishing from the editor and the article rendering            |
 
 Signing in through the form is proved once, by `UI-P0-01`. Every other UI test injects the
 session directly, because re-proving login on the way to testing something else only buys
@@ -102,7 +140,7 @@ puts full coverage out of scope and asks for depth over breadth, while a client 
 already speaks the whole API is what makes adding a scenario a test-only change. Every
 method was verified against live responses when written, and what that reconnaissance
 turned up is in [docs/API_DEVIATIONS.md](docs/API_DEVIATIONS.md). See
-[D-006](DECISIONS.md).
+[D-004](DECISIONS.md).
 
 ## Test isolation
 

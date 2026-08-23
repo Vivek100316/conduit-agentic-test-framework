@@ -95,15 +95,11 @@ export class ConduitClient {
 
   async getArticleRaw(slug: string, token?: string): Promise<APIResponse> {
     return this.request.get(apiUrl(`/articles/${slug}`), {
-      headers: token === undefined ? {} : authHeader(token),
+      headers: optionalAuthHeader(token),
     });
   }
 
-  async updateArticle(
-    token: string,
-    slug: string,
-    patch: Partial<ArticleInput>
-  ): Promise<Article> {
+  async updateArticle(token: string, slug: string, patch: Partial<ArticleInput>): Promise<Article> {
     const response = await this.updateArticleRaw(token, slug, patch);
     return (await parse(response, articleResponseSchema, `PUT /articles/${slug}`)).article;
   }
@@ -153,7 +149,7 @@ export class ConduitClient {
 
   async listComments(slug: string, token?: string): Promise<Comment[]> {
     const response = await this.request.get(apiUrl(`/articles/${slug}/comments`), {
-      headers: token === undefined ? {} : authHeader(token),
+      headers: optionalAuthHeader(token),
     });
     return (await parse(response, commentsResponseSchema, `GET /articles/${slug}/comments`))
       .comments;
@@ -169,7 +165,7 @@ export class ConduitClient {
 
   async getProfile(username: string, token?: string): Promise<Profile> {
     const response = await this.request.get(apiUrl(`/profiles/${username}`), {
-      headers: token === undefined ? {} : authHeader(token),
+      headers: optionalAuthHeader(token),
     });
     return (await parse(response, profileResponseSchema, `GET /profiles/${username}`)).profile;
   }
@@ -204,6 +200,14 @@ export class ConduitClient {
  */
 export function authHeader(token: string): Record<string, string> {
   return { Authorization: `Token ${token}` };
+}
+
+/**
+ * For routes marked `auth.optional`, where the response differs by caller — `favorited`
+ * and `following` are per-user, while counts are shared.
+ */
+function optionalAuthHeader(token: string | undefined): Record<string, string> {
+  return token === undefined ? {} : authHeader(token);
 }
 
 async function parse<T>(response: APIResponse, schema: ZodSchema<T>, route: string): Promise<T> {

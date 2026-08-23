@@ -3,6 +3,7 @@
 const js = require('@eslint/js');
 const tseslint = require('typescript-eslint');
 const playwright = require('eslint-plugin-playwright');
+const prettier = require('eslint-config-prettier');
 
 const guardrails = require('./eslint-rules');
 
@@ -85,5 +86,25 @@ module.exports = tseslint.config(
         __dirname: 'readonly',
       },
     },
-  }
+  },
+
+  {
+    // Claude Code hooks are plain ESM run by node, outside the TypeScript project.
+    files: ['.claude/hooks/**/*.mjs'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+      },
+    },
+  },
+
+  /**
+   * Last, so it wins: turns off every ESLint rule that overlaps with Prettier.
+   * Formatting is Prettier's job and correctness is ESLint's, and a repository where the
+   * two disagree teaches contributors to ignore both.
+   */
+  prettier
 );

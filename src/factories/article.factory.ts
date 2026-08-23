@@ -1,23 +1,26 @@
-import { faker } from '@faker-js/faker';
-
 import type { ArticleInput } from '../api/conduit-client';
+import { unique } from './unique';
 
 /**
- * Titles carry a unique suffix so that parallel workers never collide, and so that a
- * search or feed assertion can find exactly one article.
+ * Titles and tags carry a uniqueness token so that parallel workers never collide and a
+ * feed assertion can find exactly one article.
  *
- * Tags are unique per call by default. Conduit's tag list is global — every test in the
- * run shares it — so a fixed tag name would make any assertion about tags dependent on
- * what else happened to be running. See docs/ENGINEERING_STANDARDS.md.
+ * Tags in particular must be unique: Conduit's tag list is global — shared by every test
+ * in the run — so a fixed tag name would make any assertion about tags depend on whatever
+ * else happened to be running. See docs/TEST_DATA.md.
+ *
+ * The body is deliberately dull. A test that asserts on content passes its own via
+ * `overrides`, which keeps the assertion visible in the test rather than buried in a
+ * generator.
  */
 export function buildArticle(overrides: Partial<ArticleInput> = {}): ArticleInput {
-  const unique = `${Date.now()}${faker.string.alphanumeric(6).toLowerCase()}`;
+  const id = unique();
 
   return {
-    title: `QA Article ${unique}`,
-    description: faker.lorem.sentence(),
-    body: faker.lorem.paragraphs(2),
-    tagList: [`tag-${unique}`],
+    title: `QA Article ${id}`,
+    description: `Description for ${id}`,
+    body: `Body for ${id}`,
+    tagList: [`tag-${id}`],
     ...overrides,
   };
 }

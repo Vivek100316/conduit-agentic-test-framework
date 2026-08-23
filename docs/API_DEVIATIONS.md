@@ -15,16 +15,16 @@ and line that causes it, and reference it from the test.
 
 ## Status codes
 
-| Endpoint | Spec | Actual | Cause |
-| --- | --- | --- | --- |
-| `POST /users` (success) | `201` | `200` | `res.json()` without an explicit status — `routes/api/users.js:72` |
-| `POST /users` (duplicate email) | `422` JSON | `404`, `text/html`, body `error: 404 Not Found /api/users` | The catch calls `next()` with **no argument**, so the request is not an error and falls through to the generic 404 handler in `app.js` — `routes/api/users.js:78` |
-| `POST /articles` (success) | `201` | `200` | Same pattern — `routes/api/articles.js:132` |
-| `PUT`/`DELETE /articles/:slug` (not the author) | `403` JSON | `403`, `text/plain`, body `Forbidden` | `res.sendStatus(403)` sends a bare status text — `routes/api/articles.js:193` |
-| `GET /articles/:slug` (unknown slug) | `404` JSON | `404`, `text/plain`, body `Not Found` | `res.sendStatus(404)` in the `router.param` preloader — `routes/api/articles.js:27` |
-| Any `auth.required` route without a token | `401` JSON | `401`, **`text/html`** — a full HTML error page | The dev `errorhandler` middleware renders `UnauthorizedError` as HTML — `app.js` |
+| Endpoint                                        | Spec       | Actual                                                     | Cause                                                                                                                                                             |
+| ----------------------------------------------- | ---------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /users` (success)                         | `201`      | `200`                                                      | `res.json()` without an explicit status — `routes/api/users.js:72`                                                                                                |
+| `POST /users` (duplicate email)                 | `422` JSON | `404`, `text/html`, body `error: 404 Not Found /api/users` | The catch calls `next()` with **no argument**, so the request is not an error and falls through to the generic 404 handler in `app.js` — `routes/api/users.js:78` |
+| `POST /articles` (success)                      | `201`      | `200`                                                      | Same pattern — `routes/api/articles.js:132`                                                                                                                       |
+| `PUT`/`DELETE /articles/:slug` (not the author) | `403` JSON | `403`, `text/plain`, body `Forbidden`                      | `res.sendStatus(403)` sends a bare status text — `routes/api/articles.js:193`                                                                                     |
+| `GET /articles/:slug` (unknown slug)            | `404` JSON | `404`, `text/plain`, body `Not Found`                      | `res.sendStatus(404)` in the `router.param` preloader — `routes/api/articles.js:27`                                                                               |
+| Any `auth.required` route without a token       | `401` JSON | `401`, **`text/html`** — a full HTML error page            | The dev `errorhandler` middleware renders `UnauthorizedError` as HTML — `app.js`                                                                                  |
 
-Only the first two rows are surprising in kind; the rest are surprising in *content type*.
+Only the first two rows are surprising in kind; the rest are surprising in _content type_.
 Any helper that assumes an error response is JSON will throw while parsing, which is why
 `ConduitClient` exposes `*Raw` variants for every negative path.
 
@@ -34,10 +34,10 @@ Any helper that assumes an error response is JSON will throw while parsing, whic
 
 ### `bio` and `image` change type depending on how you authenticated
 
-| Call | `bio` | `image` |
-| --- | --- | --- |
-| `POST /users` (register) | `""` | `""` |
-| `POST /users/login` | `null` | `null` |
+| Call                            | `bio`  | `image`                                                       |
+| ------------------------------- | ------ | ------------------------------------------------------------- |
+| `POST /users` (register)        | `""`   | `""`                                                          |
+| `POST /users/login`             | `null` | `null`                                                        |
 | `author` embedded in an article | `null` | `"https://static.productionready.io/images/smiley-cyrus.jpg"` |
 
 `toAuthJSON` maps `undefined -> ""` (`models/user.js:87`), which only holds for a
